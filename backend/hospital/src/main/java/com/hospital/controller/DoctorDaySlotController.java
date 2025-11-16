@@ -16,16 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hospital.entity.DoctorDaySlot;
 import com.hospital.service.DoctorDaySlotService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @CrossOrigin
+@RequiredArgsConstructor
 @RequestMapping("/api/slots")
 public class DoctorDaySlotController {
 
     private final DoctorDaySlotService service;
-
-    public DoctorDaySlotController(DoctorDaySlotService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<DoctorDaySlot> list() {

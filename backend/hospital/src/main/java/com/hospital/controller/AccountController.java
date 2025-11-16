@@ -8,45 +8,39 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hospital.entity.Doctor;
-import com.hospital.service.DoctorService;
+import com.hospital.entity.Account;
+import com.hospital.service.AccountService;
 
 import lombok.RequiredArgsConstructor;
+
 
 @RestController
 @CrossOrigin
 @RequiredArgsConstructor
-@RequestMapping("/api/doctors")
-public class DoctorController {
+@RequestMapping("/api/accounts")
+public class AccountController {
 
-    private final DoctorService service;
+    private final AccountService service;
 
     @GetMapping
-    public List<Doctor> list() {
+    public List<Account> list() {
         return service.findAll();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Doctor> get(@PathVariable Integer id) {
-        return service.findById(id).map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+    public ResponseEntity<Account> get(@PathVariable Integer id) {
+        return service.findById(id)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Doctor create(@RequestBody Doctor d) {
-        return service.save(d);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Doctor> update(@PathVariable Integer id, @RequestBody Doctor d) {
-        if (!service.findById(id).isPresent()) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(service.update(id, d));
+    public Account create(@RequestBody Account account) {
+        return service.save(account);
     }
 
     @DeleteMapping("/{id}")

@@ -3,6 +3,8 @@ package com.hospital.entity;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.UpdateTimestamp;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -48,6 +50,7 @@ public class Doctor {
     @Column(name = "picture_url", length = 500)
     private String pictureUrl;
 
+    @UpdateTimestamp
     @Column(name = "last_update")
     private LocalDateTime lastUpdate;
 }

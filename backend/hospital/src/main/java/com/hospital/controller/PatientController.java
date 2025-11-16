@@ -16,16 +16,15 @@ import org.springframework.web.bind.annotation.RestController;
 import com.hospital.entity.Patient;
 import com.hospital.service.PatientService;
 
+import lombok.RequiredArgsConstructor;
+
 @RestController
 @CrossOrigin
+@RequiredArgsConstructor
 @RequestMapping("/api/patients")
 public class PatientController {
 
     private final PatientService service;
-
-    public PatientController(PatientService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<Patient> list() {

@@ -15,17 +15,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.hospital.entity.Appointment;
 import com.hospital.service.AppointmentService;
+import lombok.RequiredArgsConstructor;
+
 
 @RestController
 @CrossOrigin
 @RequestMapping("/api/appointments")
+@RequiredArgsConstructor
 public class AppointmentController {
 
     private final AppointmentService service;
-
-    public AppointmentController(AppointmentService service) {
-        this.service = service;
-    }
 
     @GetMapping
     public List<Appointment> list() {
