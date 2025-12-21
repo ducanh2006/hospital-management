@@ -61,9 +61,11 @@ public class JwtUtils {
     public Integer getIdFromToken(String token) {
         try {
             Claims claims = validateToken(token);
-            return Integer.parseInt(claims.getSubject());
-        } catch ( Exception e) {
-            throw new RuntimeException("Invalid token, error caused in service.JwtUtils.getIdFromToken");
+            return Integer.valueOf(claims.getSubject());
+        } catch ( IllegalArgumentException e) {
+            throw e;
+        }catch(JwtException e){
+            return null;
         }
     }
     /**
