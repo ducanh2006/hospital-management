@@ -1,11 +1,19 @@
 function resolveLink(target) {
   const inPartials = location.pathname.includes("/partials/");
+  const rootPages = ["admin.html"];
+  const isExternal =
+    target.startsWith("http") || target.startsWith("/") || target.startsWith("../");
+
+  if (isExternal) return target;
+
   if (inPartials) {
     if (target === "index.html") return "../index.html";
+    if (rootPages.includes(target)) return `../${target}`;
     return target;
   }
 
   if (target === "index.html") return "index.html";
+  if (rootPages.includes(target)) return target;
   return `partials/${target}`;
 }
 
@@ -21,6 +29,7 @@ function markActiveNav() {
     "doi-ngu-bac-si.html": ".nav-item-doctors",
     "tin-tuc.html": ".nav-item-news",
     "ket-qua-xet-nghiem.html": ".nav-item-results",
+    "admin.html": ".nav-item-admin",
   };
 
   const selector = map[key];
@@ -58,35 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch(file);
       const html = await res.text();
       el.innerHTML = html;
-
-      // Normalize image paths inside injected partials so assets load whether
-      // the current page is at site root (e.g., index.html) or inside /partials/
-      el.querySelectorAll('img').forEach((img) => {
-        const src = img.getAttribute('src') || '';
-        if (!src) return;
-
-        // If src starts with "assets/" (relative to site root), and we're
-        // currently viewing a page under /partials/, prepend "..\/" so it
-        // points to the correct location (../assets/...)
-        if (src.startsWith('assets/')) {
-          if (location.pathname.includes('/partials/')) {
-            img.src = '../' + src;
-          } else {
-            img.src = src;
-          }
-        }
-
-        // If src starts with "../assets/" and we're at site root, remove the
-        // "..\/" so it becomes "assets/..." (useful if partials were edited
-        // to use parent-relative paths).
-        if (src.startsWith('../assets/')) {
-          if (!location.pathname.includes('/partials/')) {
-            img.src = src.replace(/^\.\.\//, '');
-          } else {
-            img.src = src;
-          }
-        }
-      });
 
       if (file.includes("header.html")) {
         wireNavLinks();
