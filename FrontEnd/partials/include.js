@@ -59,6 +59,35 @@ document.addEventListener("DOMContentLoaded", () => {
       const html = await res.text();
       el.innerHTML = html;
 
+      // Normalize image paths inside injected partials so assets load whether
+      // the current page is at site root (e.g., index.html) or inside /partials/
+      el.querySelectorAll('img').forEach((img) => {
+        const src = img.getAttribute('src') || '';
+        if (!src) return;
+
+        // If src starts with "assets/" (relative to site root), and we're
+        // currently viewing a page under /partials/, prepend "..\/" so it
+        // points to the correct location (../assets/...)
+        if (src.startsWith('assets/')) {
+          if (location.pathname.includes('/partials/')) {
+            img.src = '../' + src;
+          } else {
+            img.src = src;
+          }
+        }
+
+        // If src starts with "../assets/" and we're at site root, remove the
+        // "..\/" so it becomes "assets/..." (useful if partials were edited
+        // to use parent-relative paths).
+        if (src.startsWith('../assets/')) {
+          if (!location.pathname.includes('/partials/')) {
+            img.src = src.replace(/^\.\.\//, '');
+          } else {
+            img.src = src;
+          }
+        }
+      });
+
       if (file.includes("header.html")) {
         wireNavLinks();
         markActiveNav();
