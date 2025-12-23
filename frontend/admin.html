@@ -906,7 +906,6 @@ display: inline-flex;
               </thead>
               <tbody id="doctorsTable"></tbody>
               
-              </tbody>
             </table>
           </div>
 
@@ -964,7 +963,6 @@ display: inline-flex;
               </thead>
               <tbody id="departmentsTable"></tbody>
               
-              </tbody>
             </table>
           </div>
 
@@ -1033,7 +1031,6 @@ display: inline-flex;
               </thead>
               <tbody id="appointmentsTable"></tbody>
               
-              </tbody>
             </table>
           </div>
 
@@ -1115,30 +1112,31 @@ display: inline-flex;
 </div>
 
 <script>
-  // Đổi nội dung panel bên phải theo mục trên thanh nav
   const navLinks = document.querySelectorAll('.nav-link');
   const panelSections = document.querySelectorAll('.panel-section');
-
   navLinks.forEach(link => {
-    link.addEventListener('click', () => {
-      const section = link.dataset.section;
+  link.addEventListener('click', () => {
+    const section = link.dataset.section;
 
-      navLinks.forEach(l => l.classList.remove('active'));
-      link.classList.add('active');
+    // active menu
+    navLinks.forEach(l => l.classList.remove('active'));
+    link.classList.add('active');
 
-      panelSections.forEach(p => {
-        if (p.dataset.section === section) {
-          p.classList.add('active');
-        } else {
-          p.classList.remove('active');
-        }
-      });
+    // active panel
+    panelSections.forEach(p => {
+      p.classList.toggle('active', p.dataset.section === section);
     });
+
+    // 🔥 GỌI API THEO SECTION
+    if (section === 'patients') loadPatients();
+    if (section === 'doctors') loadDoctors();
+    if (section === 'departments') loadDepartments();
+    if (section === 'appointments') loadAppointments();
   });
-</script>
-</body>
-</html>
-function loadPatients() {
+});
+
+
+  function loadPatients() {
   fetch('http://localhost:3000/api/patients')
     .then(res => res.json())
     .then(data => {
@@ -1150,9 +1148,13 @@ function loadPatients() {
             <td>BN${p.id}</td>
             <td>${p.full_name}</td>
             <td>${p.gender}</td>
+            <td>${p.birth_date}</td>
             <td>${p.phone}</td>
-            <td>${p.address || ''}</td>
-            <td>Hoạt động</td>
+            <td><span class="tag">Hoạt động</span></td>
+            <td class="table-actions">
+               <button>Sửa</button>
+              <button>Xóa</button>
+            </td>
           </tr>
         `;
       });
@@ -1167,11 +1169,17 @@ function loadDoctors() {
       data.forEach(d => {
         tb.innerHTML += `
           <tr>
-            <td>BS${d.id}</td>
-            <td>${d.full_name}</td>
-            <td>${d.department}</td>
-            <td>${d.phone}</td>
+           <td>BS${d.id}</td>
+           <td>${d.full_name}</td>
+           <td>${d.department}</td>
+           <td>${d.email}</td>
+           <td>${d.phone}</td>
+           <td class="table-actions">
+             <button>Sửa</button>
+             <button>Xóa</button>
+           </td>
           </tr>
+
         `;
       });
     });
@@ -1185,9 +1193,16 @@ function loadDepartments() {
       data.forEach(dep => {
         tb.innerHTML += `
           <tr>
-            <td>K${dep.id}</td>
-            <td>${dep.name}</td>
+           <td>K${dep.id}</td>
+           <td>${dep.name}</td>
+           <td>${dep.room_count}</td>
+           <td>${dep.description || ''}</td>
+           <td class="table-actions">
+            <button>Sửa</button>
+            <button>Xóa</button>
+           </td>
           </tr>
+
         `;
       });
     });
@@ -1201,12 +1216,27 @@ function loadAppointments() {
       data.forEach(a => {
         tb.innerHTML += `
           <tr>
-            <td>${a.patient}</td>
-            <td>${a.doctor}</td>
-            <td>${a.appointment_date}</td>
-            <td>${a.status}</td>
+           <td>LH${a.id}</td>
+           <td>${a.patient}</td>
+           <td>${a.doctor}</td>
+           <td>${a.appointment_date}</td>
+           <td>${a.appointment_time}</td>
+           <td>
+            <span class="tag ${a.status === 'Hủy' ? 'tag-red' : ''}">
+              ${a.status}
+            </span>
+           </td>
+           <td class="table-actions">
+           <button>Sửa</button>
+           <button>Xóa</button>
+           </td>
           </tr>
+
         `;
       });
     });
 }
+</script>
+</body>
+</html>
+
