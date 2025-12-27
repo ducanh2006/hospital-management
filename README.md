@@ -105,7 +105,7 @@ Cấu trúc quan hệ giữa các bảng trong cơ sở dữ liệu được min
    ```
 
    > Thay `your_password_here` bằng mật khẩu MySQL của bạn.
-   > Thay `your_assets_folder_here` bằng đường dẫn đến folder assets ví dụ: file:C:/Users/ADMIN/Desktop/OOP-midterm--tmp-backup-version/OOP-midterm--main-lastest/assets`
+   > Thay `your_assets_folder_here` bằng đường dẫn đến folder assets ví dụ: file:C:/Users/ADMIN/Desktop/OOP-midterm--tmp-backup-version/OOP-midterm--main-lastest/assets`.
 
 #### c. Chạy Backend
 
