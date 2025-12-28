@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Trang quản trị - Bệnh viện Ánh Dương</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<div class="page">
+  <!-- HEADER -->
+  <header class="topbar">
+    <div class="container">
+      <div class="topbar-inner">
+        <div class="brand">
+          <div class="logo"><span>+</span></div>
+          <div class="brand-text">
+            <b>Bệnh viện Ánh Dương</b>
+            <span>Trang quản trị hệ thống</span>
+          </div>
+        </div>
+
+        <div class="search-top">
+          <div class="search-box">
+            <div class="search-icon"></div>
+            <input type="text" placeholder="Tìm bệnh nhân, bác sĩ, lịch hẹn..." />
+          </div>
+        </div>
+
+        <div class="user-area">
+          <div>
+            <div class="user-role" id="userRole"></div>
+            <div class="user-name" id="userName"></div>
+          </div>
+          <div class="avatar" id="userAvatar"></div>
+          <button class="btn-outline">Đăng xuất</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="container">
+      <div class="nav-inner">
+        <div class="nav-link" data-section="patients">Quản lý bệnh nhân</div>
+        <div class="nav-link" data-section="doctors">Quản lý bác sĩ</div>
+        <div class="nav-link" data-section="departments">Quản lý khoa</div>
+        <div class="nav-link" data-section="appointments">Quản lý lịch hẹn</div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="container">
+      <section class="panel" id="panelContent">
+        <!-- partial sẽ load vào đây -->
+      </section>
+    </div>
+  </main>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

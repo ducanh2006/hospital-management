@@ -1,0 +1,74 @@
+<div class="panel-section active" data-section="departments">
+
+  <!-- HEADER -->
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Quản lý khoa</div>
+      <div class="panel-sub">Thêm / sửa thông tin khoa</div>
+    </div>
+    <div class="panel-actions">
+      <button class="btn-primary" type="button">+ Thêm khoa</button>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <div class="form-title">Thông tin khoa</div>
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label>Mã khoa *</label>
+        <input type="text" id="departmentId" name="id" placeholder="KH001" required>
+      </div>
+
+      <div class="form-field">
+        <label>Tên khoa *</label>
+        <input type="text" id="departmentName" name="name" required>
+      </div>
+
+      <div class="form-field">
+        <label>Trưởng khoa</label>
+        <select id="departmentHead" name="head_doctor_id">
+          <option value="">-- Chọn bác sĩ --</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Số điện thoại</label>
+        <input type="text" id="departmentPhone" name="phone">
+      </div>
+
+      <div class="form-field full">
+        <label>Mô tả</label>
+        <textarea id="departmentDesc" name="description" rows="3"></textarea>
+      </div>
+
+      <!-- hidden -->
+      <input type="hidden" id="lastUpdate" name="last_update">
+    </div>
+
+    <div class="form-actions">
+      <button class="btn-secondary" type="button">Làm mới</button>
+      <button class="btn-primary" type="button">Lưu / Cập nhật</button>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <table>
+    <thead>
+      <tr>
+        <th>Mã khoa</th>
+        <th>Tên khoa</th>
+        <th>Trưởng khoa</th>
+        <th>SĐT</th>
+        <th>Mô tả</th>
+        <th>Cập nhật</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="departmentsTable">
+      <!-- JS render -->
+    </tbody>
+  </table>
+
+</div>

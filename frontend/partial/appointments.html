@@ -1,0 +1,117 @@
+<div class="panel-section active" data-section="appointments">
+
+  <!-- HEADER -->
+  <div class="panel-header">
+    <div>
+      <div class="panel-title">Quản lý lịch hẹn</div>
+      <div class="panel-sub">Tạo và quản lý lịch hẹn khám bệnh</div>
+    </div>
+
+    <div class="panel-actions">
+      <div class="small-search">
+        <span>🔍</span>
+        <input type="text" placeholder="Tìm theo mã lịch hẹn">
+      </div>
+      <button class="btn-primary" type="button">+ Thêm lịch hẹn</button>
+    </div>
+  </div>
+
+  <!-- FORM -->
+  <div class="form-card">
+    <div class="form-title">Thông tin lịch hẹn</div>
+
+    <div class="form-grid">
+
+      <!-- Mã lịch hẹn (BẮT BUỘC) -->
+      <div class="form-field">
+        <label>Mã lịch hẹn *</label>
+        <input type="text" id="appointmentCode" name="appointmentCode"
+               placeholder="LH001" required>
+      </div>
+
+      <!-- Ca khám (BẮT BUỘC) -->
+      <div class="form-field">
+        <label>Ca khám *</label>
+        <select id="shiftId" name="shiftId" required>
+          <option value="">-- Chọn ca khám --</option>
+        </select>
+      </div>
+
+      <!-- Bác sĩ (BẮT BUỘC) -->
+      <div class="form-field">
+        <label>Bác sĩ *</label>
+        <select id="doctorId" name="doctorId" required>
+          <option value="">-- Chọn bác sĩ --</option>
+        </select>
+      </div>
+
+      <!-- Bệnh nhân (BẮT BUỘC) -->
+      <div class="form-field">
+        <label>Bệnh nhân *</label>
+        <select id="patientId" name="patientId" required>
+          <option value="">-- Chọn bệnh nhân --</option>
+        </select>
+      </div>
+
+      <!-- Khoa (BẮT BUỘC) -->
+      <div class="form-field">
+        <label>Khoa *</label>
+        <select id="departmentId" name="departmentId" required>
+          <option value="">-- Chọn khoa --</option>
+        </select>
+      </div>
+
+      <!-- Thời gian khám (BẮT BUỘC) -->
+      <div class="form-field">
+        <label>Thời gian *</label>
+        <input type="datetime-local" id="appointmentTime"
+               name="appointmentTime" required>
+      </div>
+
+      <!-- Trạng thái (BẮT BUỘC – có mặc định) -->
+      <div class="form-field">
+        <label>Trạng thái *</label>
+        <select id="status" name="status" required>
+          <option value="pending">Chờ khám</option>
+          <option value="done">Đã khám</option>
+          <option value="cancelled">Đã hủy</option>
+        </select>
+      </div>
+
+      <!-- Ghi chú (KHÔNG BẮT BUỘC) -->
+      <div class="form-field full">
+        <label>Ghi chú</label>
+        <textarea id="note" name="note"
+                  rows="3"
+                  placeholder="Ghi chú thêm (nếu có)..."></textarea>
+      </div>
+
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="form-actions">
+      <button class="btn-secondary" type="button">Làm mới</button>
+      <button class="btn-primary" type="button">Lưu / Cập nhật</button>
+    </div>
+  </div>
+
+  <!-- TABLE -->
+  <table>
+    <thead>
+      <tr>
+        <th>Mã LH</th>
+        <th>Ca khám</th>
+        <th>Bác sĩ</th>
+        <th>Bệnh nhân</th>
+        <th>Khoa</th>
+        <th>Thời gian</th>
+        <th>Trạng thái</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="appointmentsTable">
+      <!-- JS render -->
+    </tbody>
+  </table>
+
+</div>
