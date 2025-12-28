@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.hospital.entity.AppointmentEntity;
+import com.hospital.dto.AppointmentHistoryDTO;
 import com.hospital.entity.PatientEntity;
 import com.hospital.service.PatientService;
 
@@ -47,9 +47,9 @@ public class PatientController {
     // 3. Lấy lịch sử các cuộc hẹn/khám bệnh của bệnh nhân
     // Vận dụng hàm getAppointmentHistory đã viết trong Service
     @GetMapping("/appointments/{identityNumber}")
-    public ResponseEntity<List<AppointmentEntity>> getHistory(@PathVariable Long identityNumber) {
+    public ResponseEntity<List<AppointmentHistoryDTO>> getHistory(@PathVariable Long identityNumber) {
         try {
-            List<AppointmentEntity> history = service.getAppointmentHistory(identityNumber);
+            List<AppointmentHistoryDTO> history = service.getAppointmentHistory(identityNumber);
             return ResponseEntity.ok(history);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

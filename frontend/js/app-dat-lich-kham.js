@@ -1,350 +1,324 @@
-function initChatWidget() {
-  const chatWidget = document.getElementById('chatWidget');
-  const chatBtn = document.querySelector('.chat-btn, .chat-fab');
-  const chatClose = document.getElementById('chatCloseBtn');
-  const chatForm = document.getElementById('chatForm');
-  const chatInput = document.getElementById('chatInput');
-  const chatBody = document.getElementById('chatBody');
+const API_BASE_URL = 'http://localhost:8080/api';
+const UPLOAD_BASE_URL = 'http://localhost:8080/uploads'; // Đường dẫn ảnh từ server
 
-  if (!chatWidget || chatWidget.dataset.bound === 'true') return;
-  chatWidget.dataset.bound = 'true';
-
-  const closeChat = () => chatWidget.classList.remove('open');
-
-  chatBtn?.addEventListener('click', () => {
-    chatWidget.classList.toggle('open');
-    if (chatWidget.classList.contains('open')) {
-      setTimeout(() => chatInput?.focus(), 50);
-    }
-  });
-
-  chatClose?.addEventListener('click', closeChat);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeChat();
-  });
-
-  if (chatForm && chatInput && chatBody) {
-    chatForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      const row = document.createElement('div');
-      row.className = 'chat-message-row me';
-
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-message-bubble me';
-      bubble.textContent = text;
-
-      row.appendChild(bubble);
-      chatBody.appendChild(row);
-      chatBody.scrollTop = chatBody.scrollHeight;
-
-      chatInput.value = '';
-
-      setTimeout(() => {
-        const botRow = document.createElement('div');
-        botRow.className = 'chat-message-row';
-
-        const avatar = document.createElement('div');
-        avatar.className = 'chat-avatar';
-        avatar.textContent = 'TV';
-
-        const botBubble = document.createElement('div');
-        botBubble.className = 'chat-message-bubble support';
-        botBubble.textContent = 'Cảm ơn bạn! Tư vấn viên sẽ liên hệ lại trong thời gian sớm nhất.';
-
-        botRow.appendChild(avatar);
-        botRow.appendChild(botBubble);
-        chatBody.appendChild(botRow);
-        chatBody.scrollTop = chatBody.scrollHeight;
-      }, 600);
-    });
-  }
-}
-
-const doctors = [
-  { id: 1, name: 'Nguyễn Lan Anh', gender: 'Nữ', specialty: 'Nhi khoa', exp: 9, rating: 4.8, tags: ['Khám ngoài giờ', 'Tư vấn video'], avatar: '#c7d2fe', photo: '../assets/doctor-female-1.png' },
-  { id: 2, name: 'Trần Quang Huy', gender: 'Nam', specialty: 'Tim mạch', exp: 15, rating: 4.9, tags: ['Nhận bệnh mới'], avatar: '#b9fbc0', photo: '../assets/doctor-male-1.png' },
-  { id: 3, name: 'Lê Minh Tuấn', gender: 'Nam', specialty: 'Chấn thương chỉnh hình', exp: 12, rating: 4.7, tags: ['Tư vấn video'], avatar: '#ffd6a5', photo: '../assets/doctor-male-2.png' },
-  { id: 4, name: 'Phạm Thùy Dương', gender: 'Nữ', specialty: 'Tai mũi họng', exp: 7, rating: 4.6, tags: [], avatar: '#f9c6d4', photo: '../assets/doctor-female-2.png' },
-  { id: 5, name: 'Bùi Vân Nam', gender: 'Nam', specialty: 'Nội thần kinh', exp: 18, rating: 4.8, tags: ['Khám ngoài giờ', 'Nhận bệnh mới'], avatar: '#ffd6a5', photo: '../assets/doctor-male-3.png' },
-  { id: 6, name: 'Đỗ Hồng Nhung', gender: 'Nữ', specialty: 'Sản phụ khoa', exp: 14, rating: 4.9, tags: ['Tư vấn video'], avatar: '#e9ff70', photo: '../assets/doctor-female-3.png' },
-  { id: 7, name: 'Vũ Tiến Minh', gender: 'Nam', specialty: 'Răng hàm mặt', exp: 10, rating: 4.5, tags: ['Khám ngoài giờ'], avatar: '#caffbf', photo: '../assets/doctor-male-4.png' },
-  { id: 8, name: 'Hồ Phương Linh', gender: 'Nữ', specialty: 'Mắt', exp: 6, rating: 4.4, tags: ['Nhận bệnh mới'], avatar: '#bdb2ff', photo: '../assets/doctor-female-4.png' },
-  { id: 9, name: 'Đỗ Quốc Khánh', gender: 'Nam', specialty: 'Da liễu', exp: 11, rating: 4.6, tags: [], avatar: '#ffd6e7', photo: '../assets/doctor-male-5.png' },
-  { id: 10, name: 'Tô Thanh Bình', gender: 'Nữ', specialty: 'Nội tiết', exp: 16, rating: 4.7, tags: ['Tư vấn video'], avatar: '#a7f3d0', photo: '../assets/doctor-female-5.png' },
-  { id: 11, name: 'Nguyễn Quốc Anh', gender: 'Nam', specialty: 'Tiết niệu', exp: 8, rating: 4.5, tags: ['Khám ngoài giờ'], avatar: '#fecaca', photo: '../assets/doctor-male-6.png' },
-  { id: 12, name: 'Lương Hải Yến', gender: 'Nữ', specialty: 'Nhi khoa', exp: 5, rating: 4.3, tags: [], avatar: '#fde68a', photo: '../assets/doctor-female-6.png' },
-  { id: 13, name: 'Phan Nhật Minh', gender: 'Nam', specialty: 'Tim mạch', exp: 20, rating: 4.9, tags: ['Tư vấn video', 'Khám ngoài giờ'], avatar: '#bae6fd', photo: '../assets/doctor-male-7.png' },
-  { id: 14, name: 'Đinh Thu Trang', gender: 'Nữ', specialty: 'Da liễu', exp: 9, rating: 4.6, tags: ['Nhận bệnh mới'], avatar: '#f5d0fe', photo: '../assets/doctor-female-7.png' },
-];
-
-const specialtyDisplayMap = {
-  'Nhi khoa': 'Nhi khoa',
-  'Tim mạch': 'Tim mạch',
-  'Chấn thương chỉnh hình': 'Chấn thương chỉnh hình',
-  'Tai mũi họng': 'Tai mũi họng',
-  'Nội thần kinh': 'Nội thần kinh',
-  'Sản phụ khoa': 'Sản phụ khoa',
-  'Răng hàm mặt': 'Răng hàm mặt',
-  'Mắt': 'Mắt',
-  'Da liễu': 'Da liễu',
-  'Nội tiết': 'Nội tiết',
-  'Tiết niệu': 'Tiết niệu',
-};
-
-function initBookingPage() {
-  const form = document.getElementById('bookingForm');
-  if (!form) return;
-
-  const urlParams = new URLSearchParams(window.location.search);
-  const presetSpec = urlParams.get('spec') || '';
-  const presetDoctorId = parseInt(urlParams.get('doctor') || '', 10) || null;
-
-  const select = document.getElementById('specialtySelect');
-  const doctorSelect = document.getElementById('doctorSelect');
-  const deptLabel = document.getElementById('selectedDept');
-  const dayPicker = document.getElementById('dayPicker');
-  const slotList = document.getElementById('slotList');
-  const slotNote = document.getElementById('slotNote');
-  const successBox = document.getElementById('bookingSuccess');
-
-  const BASE_SLOTS = ['08:00', '08:30', '09:00', '09:30', '10:00', '13:30', '14:00', '15:00'];
-  const bookings = new Set(); // key: specialty|doctor|date|slot
-  let days = [];
-  let selectedDate = '';
-  let selectedSlot = '';
-  let selectedDoctorId = '';
-
-  function getDisplayName(raw) {
-    return specialtyDisplayMap[raw] || raw;
-  }
-
-  function getDoctorById(id) {
-    return doctors.find((d) => String(d.id) === String(id));
-  }
-
-  function buildSpecialtyOptions() {
-    if (!Array.isArray(doctors) || !select) return;
-    const specs = Array.from(new Set(doctors.map((d) => d.specialty))).sort((a, b) =>
-      getDisplayName(a).localeCompare(getDisplayName(b), 'vi', { sensitivity: 'base' })
-    );
-    specs.forEach((spec) => {
-      const opt = document.createElement('option');
-      opt.value = spec;
-      opt.textContent = getDisplayName(spec);
-      select.appendChild(opt);
-    });
-
-    if (presetSpec && specs.includes(presetSpec)) {
-      select.value = presetSpec;
-      if (deptLabel) deptLabel.textContent = getDisplayName(presetSpec);
-    }
-
-    if (!select.value && presetDoctorId) {
-      const doc = getDoctorById(presetDoctorId);
-      if (doc) {
-        select.value = doc.specialty;
-        if (deptLabel) deptLabel.textContent = getDisplayName(doc.specialty);
-      }
-    }
-  }
-
-  function buildDoctorOptions(spec) {
-    if (!doctorSelect) return;
-    doctorSelect.innerHTML = '<option value=\"\">Chọn bác sĩ</option>';
-    const list = Array.isArray(doctors) ? doctors.filter((d) => !spec || d.specialty === spec) : [];
-
-    list.forEach((d) => {
-      const opt = document.createElement('option');
-      opt.value = d.id;
-      opt.textContent = d.name;
-      doctorSelect.appendChild(opt);
-    });
-
-    const targetId = presetDoctorId && list.some((d) => d.id === presetDoctorId) ? String(presetDoctorId) : '';
-
-    if (targetId) {
-      doctorSelect.value = targetId;
-      selectedDoctorId = targetId;
-    } else {
-      selectedDoctorId = doctorSelect.value || '';
-    }
-  }
-
-  function buildDays() {
-    days = [];
-    const now = new Date();
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(now);
-      d.setDate(now.getDate() + i);
-      const value = d.toISOString().slice(0, 10);
-      const label = `${d.getDate()}/${d.getMonth() + 1}`;
-      const dow = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'][d.getDay()];
-      days.push({ value, label, dow });
-    }
-    if (!selectedDate && days.length) {
-      selectedDate = days[0].value;
-    }
-  }
-
-  function renderDays() {
-    if (!dayPicker) return;
-    dayPicker.innerHTML = '';
-    days.forEach((day) => {
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'day-pill' + (day.value === selectedDate ? ' active' : '');
-      btn.innerHTML = `<strong>${day.label}</strong><span>${day.dow}</span>`;
-      btn.addEventListener('click', () => {
-        selectedDate = day.value;
-        selectedSlot = '';
-        renderDays();
-        renderSlots();
-      });
-      dayPicker.appendChild(btn);
-    });
-  }
-
-  function clearErrors() {
-    document.querySelectorAll('.error').forEach((el) => {
-      el.textContent = '';
-    });
-  }
-
-  function showError(name, message) {
-    const el = document.querySelector(`.error[data-error=\"${name}\"]`);
-    if (el) el.textContent = message;
-  }
-
-  function renderSlots() {
-    if (!slotList) return;
-    slotList.innerHTML = '';
-    const spec = select?.value || '';
-    if (!spec) {
-      if (slotNote) slotNote.textContent = 'Chọn khoa để xem giờ trống.';
-      return;
-    }
-    const doctorId = selectedDoctorId || doctorSelect?.value || '';
-    if (!doctorId) {
-      if (slotNote) slotNote.textContent = 'Chọn bác sĩ để xem giờ trống.';
-      return;
-    }
-    if (!selectedDate) {
-      if (slotNote) slotNote.textContent = 'Chọn ngày để xem giờ trống.';
-      return;
-    }
-    if (slotNote) slotNote.textContent = 'Chọn giờ khám.';
-
-    BASE_SLOTS.forEach((time) => {
-      const key = `${spec}|${doctorId}|${selectedDate}|${time}`;
-      const isBusy = bookings.has(key);
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = 'slot-btn ' + (isBusy ? 'busy' : 'free') + (selectedSlot === time ? ' active' : '');
-      btn.textContent = time + (isBusy ? ' (Đã đặt)' : '');
-      btn.disabled = isBusy;
-      btn.addEventListener('click', () => {
-        selectedSlot = time;
-        renderSlots();
-      });
-      slotList.appendChild(btn);
-    });
-  }
-
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    clearErrors();
-    if (successBox) {
-      successBox.hidden = true;
-      successBox.textContent = '';
-    }
-
-    const fullName = document.getElementById('fullName')?.value.trim();
-    const cccd = document.getElementById('cccd')?.value.trim();
-    const specialty = select?.value || '';
-    const doctorId = selectedDoctorId || doctorSelect?.value || '';
-    const doctorObj = getDoctorById(doctorId);
-
-    let valid = true;
-
-    if (!fullName) {
-      showError('fullName', 'Vui lòng nhập họ tên.');
-      valid = false;
-    }
-
-    if (!/^[0-9]{12}$/.test(cccd || '')) {
-      showError('cccd', 'CCCD phải đúng 12 chữ số.');
-      valid = false;
-    }
-
-    if (!specialty) {
-      showError('specialty', 'Vui lòng chọn khoa.');
-      valid = false;
-    }
-
-    if (!selectedDate) {
-      showError('specialty', 'Vui lòng chọn ngày khám.');
-      valid = false;
-    }
-
-    if (!selectedSlot) {
-      showError('specialty', 'Vui lòng chọn giờ khám.');
-      valid = false;
-    }
-
-    if (!doctorId) {
-      showError('doctor', 'Vui lòng chọn bác sĩ.');
-      valid = false;
-    }
-
-    if (!valid) return;
-
-    const key = `${specialty}|${doctorId}|${selectedDate}|${selectedSlot}`;
-    bookings.add(key);
-    renderSlots();
-
-    if (successBox) {
-      successBox.hidden = false;
-      const docName = doctorObj?.name || 'Bác sĩ đã chọn';
-      successBox.textContent = `Đặt lịch thành công cho ${fullName} - ${docName} - ${getDisplayName(specialty)} - ${selectedDate} lúc ${selectedSlot}.`;
-    }
-  });
-
-  select?.addEventListener('change', () => {
-    const spec = select.value || '';
-    if (deptLabel) deptLabel.textContent = spec ? getDisplayName(spec) : 'Chưa chọn khoa';
-    buildDoctorOptions(spec);
-    selectedDoctorId = doctorSelect?.value || '';
-    selectedSlot = '';
-    renderSlots();
-  });
-
-  doctorSelect?.addEventListener('change', () => {
-    selectedDoctorId = doctorSelect.value || '';
-    renderSlots();
-  });
-
-  select?.addEventListener('mousedown', () => {
-    if (select.size === 1) {
-      select.blur();
-      setTimeout(() => select.focus({ preventScroll: true }), 0);
-    }
-  });
-
-  buildSpecialtyOptions();
-  buildDoctorOptions(select?.value || presetSpec || '');
-  buildDays();
-  renderDays();
-  renderSlots();
-
-  if (presetSpec || presetDoctorId) {
-    renderSlots();
-  }
-}
+// Biến lưu trạng thái validation
+let isDoctorValid = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-  initChatWidget();
-  initBookingPage();
+    // 1. Xử lý URL Params và khởi tạo form
+    initFormFromURL();
+
+    // 2. Lắng nghe sự kiện nhập ID Bác sĩ (Live Check)
+    const docInput = document.getElementById('bookingDocId');
+    if (docInput) {
+        // Dùng debounce 500ms để tránh gọi API liên tục khi đang gõ
+        docInput.addEventListener('input', debounce(handleDoctorIdChange, 500));
+    }
+
+    // 3. Xử lý nút Đặt lịch (Submit Form)
+    const bookingForm = document.getElementById('bookingForm');
+    if (bookingForm) {
+        bookingForm.addEventListener('submit', handleBookingSubmit);
+    }
+
+    // 4. Xử lý Form đăng ký bệnh nhân mới (trong Modal)
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', handleRegisterSubmit);
+    }
 });
+
+// --- PHẦN 1: KHỞI TẠO & DOCTOR PREVIEW (NÂNG CẤP) ---
+
+function initFormFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const doctorId = params.get('doctorId');
+    const deptId = params.get('deptId');
+
+    // Nếu có doctorId trên URL, điền vào input và kích hoạt tìm kiếm
+    if (doctorId) {
+        const docInput = document.getElementById('bookingDocId');
+        if (docInput) {
+            docInput.value = doctorId;
+            // Gọi hàm check thủ công
+            handleDoctorIdChange({ target: docInput });
+        }
+    }
+
+    // Lưu deptId vào hidden field
+    if (deptId) {
+        const deptInput = document.getElementById('bookingDeptId');
+        if (deptInput) deptInput.value = deptId;
+    }
+}
+
+async function handleDoctorIdChange(e) {
+    const id = e.target.value.trim();
+    const previewBox = document.getElementById('docInfoContent');
+    const emptyState = document.getElementById('docEmptyState');
+    const errorState = document.getElementById('docErrorState');
+
+    // Reset UI
+    isDoctorValid = false;
+    if (previewBox) previewBox.style.display = 'none';
+    if (errorState) errorState.style.display = 'none';
+    
+    // Nếu ô nhập trống -> Hiện trạng thái chờ
+    if (!id) {
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+    }
+
+    if (emptyState) emptyState.style.display = 'none';
+
+    try {
+        // Gọi API lấy thông tin bác sĩ
+        const response = await fetch(`${API_BASE_URL}/doctors/${id}`);
+        
+        if (response.status === 404) {
+            // Hiển thị lỗi ID không tồn tại
+            if (errorState) errorState.style.display = 'block';
+            return;
+        }
+
+        if (!response.ok) throw new Error('API Error');
+
+        const doctor = await response.json();
+        
+        // --- XỬ LÝ DỮ LIỆU HIỂN THỊ ---
+        isDoctorValid = true;
+        
+        const genderText = doctor.gender === 'MALE' ? 'Nam' : (doctor.gender === 'FEMALE' ? 'Nữ' : 'Khác');
+        const ratingText = doctor.avgRating ? `${doctor.avgRating.toFixed(1)} / 5.0` : 'Chưa có đánh giá';
+        const reviewCount = doctor.totalReviews || 0;
+        const bioText = doctor.bio || 'Chưa có thông tin giới thiệu chi tiết.';
+        const email = doctor.email || 'Liên hệ bệnh viện';
+        const phone = doctor.phone || 'Liên hệ bệnh viện';
+
+        // Xử lý ảnh: Logic tương tự trang Đội ngũ bác sĩ
+        let photoUrl = `${UPLOAD_BASE_URL}/doctor-male-1.png`;
+        if (doctor.gender === 'FEMALE') {
+            photoUrl = `${UPLOAD_BASE_URL}/doctor-female-1.png`;
+        }
+
+        // Nếu có pictureId, gọi API để lấy tên file thật
+        if (doctor.pictureId) {
+            try {
+                const picRes = await fetch(`${API_BASE_URL}/pictures/find-by-id?id=${doctor.pictureId}`);
+                if (picRes.ok) {
+                    const picData = await picRes.json();
+                    photoUrl = `${UPLOAD_BASE_URL}/${picData.pictureUrl}`;
+                }
+            } catch (err) {
+                // Lỗi load ảnh thì dùng ảnh mặc định, không cần log
+            }
+        }
+
+        // Ảnh fallback khi link ảnh bị hỏng
+        const fallbackImg = `${UPLOAD_BASE_URL}/logo.png`;
+
+        // --- CẬP NHẬT GIAO DIỆN (Rich UI) ---
+        if (previewBox) {
+            previewBox.innerHTML = `
+                <div style="text-align: center;">
+                    <img src="${photoUrl}" alt="Avatar" class="doc-img" 
+                         style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"
+                         onerror="this.onerror=null; this.src='${fallbackImg}';">
+                </div>
+                
+                <h3 style="color: #0093E9; margin: 10px 0 5px; text-align: center;">${doctor.fullName}</h3>
+                <div style="color: #666; font-weight: bold; margin-bottom: 15px; text-align: center; text-transform: uppercase; font-size: 0.9em;">
+                    ${doctor.specialization}
+                </div>
+
+                <div style="text-align: left; font-size: 0.95rem; line-height: 1.8; color: #333; background: #fff; padding: 15px; border-radius: 8px;">
+                    <p>👤 <strong>Giới tính:</strong> ${genderText}</p>
+                    <p>🎓 <strong>Kinh nghiệm:</strong> ${doctor.experienceYear || 0} năm</p>
+                    <p>⭐ <strong>Đánh giá:</strong> <span style="color: #f59e0b; font-weight: bold;">${ratingText}</span> <small>(${reviewCount} lượt)</small></p>
+                    <hr style="border: 0; border-top: 1px dashed #ddd; margin: 10px 0;">
+                    <p>📧 <strong>Email:</strong> ${email}</p>
+                    <p>📞 <strong>SĐT:</strong> ${phone}</p>
+                    <div style="margin-top: 10px;">
+                        <strong>📝 Giới thiệu:</strong>
+                        <p style="font-style: italic; color: #555; margin-top: 5px; font-size: 0.9em; text-align: justify;">
+                            "${bioText}"
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            previewBox.style.display = 'block';
+        }
+
+    } catch (error) {
+        console.error("Lỗi tìm bác sĩ:", error);
+        if (errorState) errorState.style.display = 'block';
+    }
+}
+
+// --- PHẦN 2: XỬ LÝ ĐẶT LỊCH & KIỂM TRA BỆNH NHÂN ---
+
+async function handleBookingSubmit(e) {
+    e.preventDefault();
+
+    if (!isDoctorValid) {
+        alert("Vui lòng nhập ID Bác sĩ hợp lệ trước khi đặt lịch.");
+        return;
+    }
+
+    const cccd = document.getElementById('bookingCCCD').value.trim();
+    if (!cccd || cccd.length < 9) {
+        alert("Vui lòng nhập số CCCD hợp lệ.");
+        return;
+    }
+
+    // Bước 1: Kiểm tra xem bệnh nhân đã có trong DB chưa
+    try {
+        const checkRes = await fetch(`${API_BASE_URL}/patients/${cccd}`);
+        
+        if (checkRes.ok) {
+            // CASE A: Bệnh nhân đã tồn tại -> Tiến hành đặt lịch luôn
+            await createAppointment();
+        } else if (checkRes.status === 404) {
+            // CASE B: Bệnh nhân chưa tồn tại -> Mở Modal đăng ký
+            openRegisterModal(cccd);
+        } else {
+            throw new Error("Lỗi kết nối Server khi kiểm tra bệnh nhân");
+        }
+    } catch (error) {
+        console.error(error);
+        alert("Không thể kiểm tra thông tin bệnh nhân. Vui lòng thử lại.");
+    }
+}
+
+async function createAppointment() {
+    // Lấy dữ liệu từ Form đặt lịch
+    const cccd = document.getElementById('bookingCCCD').value;
+    const docId = document.getElementById('bookingDocId').value;
+    const timeVal = document.getElementById('bookingTime').value;
+    const notes = document.getElementById('bookingNotes').value;
+    const deptId = document.getElementById('bookingDeptId').value; 
+
+    // Validate time
+    if (!timeVal) {
+        alert("Vui lòng chọn thời gian khám.");
+        return;
+    }
+
+    // Tạo payload đúng với AppointmentEntity
+    const appointmentPayload = {
+        patientIdentityNumber: parseInt(cccd),
+        doctorId: parseInt(docId),
+        departmentId: deptId ? parseInt(deptId) : null,
+        time: timeVal,
+        status: "PENDING",
+        rating: null,
+        notes: notes,
+        testResults: null
+    };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/appointments`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(appointmentPayload)
+        });
+
+        if (response.ok) {
+            alert("ĐẶT LỊCH THÀNH CÔNG! \nHệ thống đã ghi nhận lịch khám của bạn.");
+            window.location.reload(); // Tải lại trang để reset form
+        } else {
+            const errText = await response.text();
+            alert("Lỗi đặt lịch: " + errText);
+        }
+    } catch (error) {
+        console.error("Lỗi đặt lịch:", error);
+        alert("Không thể kết nối đến server để đặt lịch.");
+    }
+}
+
+// --- PHẦN 3: XỬ LÝ ĐĂNG KÝ BỆNH NHÂN MỚI (MODAL) ---
+
+function openRegisterModal(cccd) {
+    const modal = document.getElementById('registerModal');
+    const cccdInput = document.getElementById('regCCCD');
+    
+    if (modal && cccdInput) {
+        // Điền sẵn CCCD vào form đăng ký (ẩn)
+        cccdInput.value = cccd;
+        modal.style.display = 'flex';
+    }
+}
+
+function closeModal() {
+    const modal = document.getElementById('registerModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+// Đóng modal khi click ra ngoài vùng nội dung
+window.onclick = function(event) {
+    const modal = document.getElementById('registerModal');
+    if (event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+
+async function handleRegisterSubmit(e) {
+    e.preventDefault();
+
+    // Lấy dữ liệu từ form modal
+    const patientData = {
+        identityNumber: parseInt(document.getElementById('regCCCD').value),
+        fullName: document.getElementById('regFullName').value.trim(),
+        gender: document.getElementById('regGender').value,
+        dateOfBirth: document.getElementById('regDob').value || null,
+        phone: document.getElementById('regPhone').value.trim(),
+        address: document.getElementById('regAddress').value || "",
+        email: "", 
+        insuranceNumber: "",
+        emergencyContactPhone: "",
+        lastUpdate: new Date().toISOString()
+    };
+
+    if (!patientData.fullName || !patientData.phone) {
+        alert("Vui lòng điền đầy đủ Họ tên và Số điện thoại.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/patients`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(patientData)
+        });
+
+        if (response.ok) {
+            alert("Đăng ký hồ sơ bệnh nhân thành công! \nĐang tự động tiếp tục đặt lịch...");
+            closeModal();
+            // Sau khi đăng ký xong, tự động gọi lại hàm đặt lịch
+            await createAppointment();
+        } else {
+            const errText = await response.text();
+            alert("Lỗi tạo hồ sơ: " + errText);
+        }
+    } catch (error) {
+        console.error("Lỗi tạo patient:", error);
+        alert("Không thể tạo hồ sơ bệnh nhân do lỗi kết nối.");
+    }
+}
+
+// --- UTILS ---
+// Hàm debounce để tránh gọi API quá nhiều khi đang gõ
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}

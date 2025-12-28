@@ -19,11 +19,6 @@
     <section class="lab-form">
       <form id="labLookupForm" class="form-stack" novalidate>
         <div class="form-group">
-          <label for="patientName">Họ và tên</label>
-          <input type="text" id="patientName" placeholder="Nguyễn Văn A" required />
-          <div class="error" data-error="patientName"></div>
-        </div>
-        <div class="form-group">
           <label for="patientCCCD">Số CCCD</label>
           <input
             type="text"
@@ -40,9 +35,9 @@
       </form>
     </section>
 
-    <section id="labResult" class="lab-result" hidden>
-      <div id="labStatus" class="lab-status"></div>
-      <div id="labDetail" class="lab-detail"></div>
+    <section id="testResults" hidden>
+      <div id="testResultsNonCompleted" ></div>
+      <div id="testResultsCompleted" ></div>
     </section>
   </main>
 

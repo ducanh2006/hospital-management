@@ -1,165 +1,198 @@
-function initChatWidget() {
-  const chatWidget = document.getElementById('chatWidget');
-  const chatBtn = document.querySelector('.chat-btn, .chat-fab');
-  const chatClose = document.getElementById('chatCloseBtn');
-  const chatForm = document.getElementById('chatForm');
-  const chatInput = document.getElementById('chatInput');
-  const chatBody = document.getElementById('chatBody');
-
-  if (!chatWidget || chatWidget.dataset.bound === 'true') return;
-  chatWidget.dataset.bound = 'true';
-
-  const closeChat = () => chatWidget.classList.remove('open');
-
-  chatBtn?.addEventListener('click', () => {
-    chatWidget.classList.toggle('open');
-    if (chatWidget.classList.contains('open')) {
-      setTimeout(() => chatInput?.focus(), 50);
-    }
-  });
-
-  chatClose?.addEventListener('click', closeChat);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeChat();
-  });
-
-  if (chatForm && chatInput && chatBody) {
-    chatForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const text = chatInput.value.trim();
-      if (!text) return;
-
-      const row = document.createElement('div');
-      row.className = 'chat-message-row me';
-
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-message-bubble me';
-      bubble.textContent = text;
-
-      row.appendChild(bubble);
-      chatBody.appendChild(row);
-      chatBody.scrollTop = chatBody.scrollHeight;
-
-      chatInput.value = '';
-
-      setTimeout(() => {
-        const botRow = document.createElement('div');
-        botRow.className = 'chat-message-row';
-
-        const avatar = document.createElement('div');
-        avatar.className = 'chat-avatar';
-        avatar.textContent = 'TV';
-
-        const botBubble = document.createElement('div');
-        botBubble.className = 'chat-message-bubble support';
-        botBubble.textContent = 'Cảm ơn bạn! Tư vấn viên sẽ liên hệ lại trong thời gian sớm nhất.';
-
-        botRow.appendChild(avatar);
-        botRow.appendChild(botBubble);
-        chatBody.appendChild(botRow);
-        chatBody.scrollTop = chatBody.scrollHeight;
-      }, 600);
-    });
-  }
-}
-
-const labData = [
-  {
-    name: 'Nguyễn Văn A',
-    cccd: '012345678901',
-    tests: [
-      { item: 'Công thức máu', value: 'Bình thường', note: 'Không bất thường', ref: '' },
-      { item: 'Glucose máu', value: '5.2 mmol/L', note: 'Trong giới hạn', ref: '3.9 - 6.4' },
-      { item: 'Chức năng thận (Creatinine)', value: '0.9 mg/dL', note: 'Trong giới hạn', ref: '0.7 - 1.3' },
-      { item: 'Men gan ALT', value: '32 U/L', note: 'Trong giới hạn', ref: '< 40' }
-    ]
-  },
-  {
-    name: 'Trần Thị B',
-    cccd: '098765432109',
-    tests: [
-      { item: 'Công thức máu', value: 'Hồng cầu hơi thấp', note: 'Theo dõi thiếu máu nhẹ', ref: '' },
-      { item: 'Ferritin', value: '15 ng/mL', note: 'Giới hạn thấp', ref: '15 - 150' }
-    ]
-  }
-];
-
-function normalizeName(str) {
-  return (str || '').toLowerCase().trim();
-}
-
-function findResult(name, cccd) {
-  const normName = normalizeName(name);
-  return labData.find(
-    (p) => normalizeName(p.name) === normName && (p.cccd || '').trim() === cccd.trim()
-  );
-}
-
-function clearErrors() {
-  document.querySelectorAll('.error').forEach((el) => (el.textContent = ''));
-}
-
-function showError(field, msg) {
-  const el = document.querySelector(`.error[data-error="${field}"]`);
-  if (el) el.textContent = msg;
-}
-
-function renderResult(data) {
-  const section = document.getElementById('labResult');
-  const status = document.getElementById('labStatus');
-  const detail = document.getElementById('labDetail');
-  if (!section || !status || !detail) return;
-
-  section.hidden = false;
-  detail.innerHTML = '';
-
-  if (!data) {
-    status.textContent = 'Bệnh nhân hiện chưa có kết quả xét nghiệm.';
-    status.className = 'lab-status warn';
-    return;
-  }
-
-  status.textContent = `Kết quả của ${data.name} (CCCD: ${data.cccd})`;
-  status.className = 'lab-status success';
-
-  const list = document.createElement('div');
-  list.className = 'lab-table';
-  data.tests.forEach((t) => {
-    const row = document.createElement('div');
-    row.className = 'lab-row';
-    row.innerHTML = `
-      <div class="lab-cell item">${t.item}</div>
-      <div class="lab-cell value">${t.value}</div>
-      <div class="lab-cell note">${t.note || ''}</div>
-      <div class="lab-cell ref">${t.ref || ''}</div>
-    `;
-    list.appendChild(row);
-  });
-  detail.appendChild(list);
-}
+const API_BASE_URL = 'http://localhost:8080/api';
 
 document.addEventListener('DOMContentLoaded', () => {
-  initChatWidget();
-
-  const form = document.getElementById('labLookupForm');
-  form?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    clearErrors();
-    const name = document.getElementById('patientName')?.value || '';
-    const cccd = document.getElementById('patientCCCD')?.value || '';
-
-    let valid = true;
-    if (!name.trim()) {
-      showError('patientName', 'Vui lòng nhập họ tên.');
-      valid = false;
+    const form = document.getElementById('labLookupForm');
+    if (form) {
+        form.addEventListener('submit', handleLookup);
     }
-    if (!/^[0-9]{12}$/.test(cccd.trim())) {
-      showError('patientCCCD', 'CCCD phải đủ 12 chữ số.');
-      valid = false;
-    }
-    if (!valid) return;
-
-    const found = findResult(name, cccd);
-    renderResult(found);
-  });
 });
+
+async function handleLookup(e) {
+    e.preventDefault();
+
+    const cccdInput = document.getElementById('patientCCCD');
+    const errorDiv = document.querySelector('.error[data-error="patientCCCD"]');
+    const cccd = cccdInput.value.trim();
+
+    // Reset lỗi cũ
+    if (errorDiv) errorDiv.textContent = '';
+    
+    // Validate cơ bản
+    if (!cccd || cccd.length !== 12) {
+        if (errorDiv) errorDiv.textContent = 'Vui lòng nhập đúng 12 số CCCD.';
+        return;
+    }
+
+    // UI Elements
+    const resultsSection = document.getElementById('testResults');
+    const containerNon = document.getElementById('testResultsNonCompleted');
+    const containerCompleted = document.getElementById('testResultsCompleted');
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+
+    // Hiệu ứng Loading
+    const originalBtnText = btnSubmit.textContent;
+    btnSubmit.textContent = 'Đang tra cứu...';
+    btnSubmit.disabled = true;
+    resultsSection.hidden = true;
+
+    try {
+        // Gọi API
+        const response = await fetch(`${API_BASE_URL}/patients/appointments/${cccd}`);
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                throw new Error('Không tìm thấy hồ sơ bệnh nhân với số CCCD này.');
+            } else {
+                throw new Error('Lỗi kết nối đến máy chủ.');
+            }
+        }
+
+        const data = await response.json();
+
+        // Xóa kết quả cũ
+        containerNon.innerHTML = '';
+        containerCompleted.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            alert('Bệnh nhân chưa có lịch sử khám bệnh nào.');
+            btnSubmit.textContent = originalBtnText;
+            btnSubmit.disabled = false;
+            return;
+        }
+
+        // Sắp xếp: Mới nhất lên đầu
+        data.sort((a, b) => new Date(b.time) - new Date(a.time));
+
+        // Phân loại
+        const completedList = data.filter(item => item.status === 'COMPLETED');
+        const nonCompletedList = data.filter(item => item.status !== 'COMPLETED');
+
+        // --- Render Phần chưa hoàn thành (Non-Completed) ---
+        if (nonCompletedList.length > 0) {
+            const title = document.createElement('h2');
+            title.className = 'section-title warning';
+            title.innerHTML = '<i class="fa-regular fa-calendar"></i> Lịch hẹn sắp tới / Chờ khám';
+            containerNon.appendChild(title);
+
+            nonCompletedList.forEach(appt => {
+                containerNon.appendChild(createAppointmentCard(appt));
+            });
+        }
+
+        // --- Render Phần đã hoàn thành & Kết quả (Completed) ---
+        if (completedList.length > 0) {
+            const title = document.createElement('h2');
+            title.className = 'section-title success';
+            title.style.marginTop = '30px'; // Cách đoạn trên ra một chút
+            title.innerHTML = '<i class="fa-solid fa-clipboard-check"></i> Kết quả khám & Xét nghiệm';
+            containerCompleted.appendChild(title);
+
+            completedList.forEach(appt => {
+                containerCompleted.appendChild(createAppointmentCard(appt));
+            });
+        } else {
+            // Nếu không có lịch sử khám xong
+            containerCompleted.innerHTML = '<p style="text-align:center; color:#666; margin-top:20px;">Chưa có kết quả xét nghiệm nào.</p>';
+        }
+
+        // Hiện section kết quả
+        resultsSection.hidden = false;
+
+    } catch (err) {
+        console.error(err);
+        if (errorDiv) errorDiv.textContent = err.message;
+    } finally {
+        btnSubmit.textContent = originalBtnText;
+        btnSubmit.disabled = false;
+    }
+}
+
+/**
+ * Hàm tạo HTML cho thẻ Card
+ */
+function createAppointmentCard(appt) {
+    const card = document.createElement('div');
+    card.className = 'result-card'; // Bạn có thể style thêm class này trong CSS nếu muốn
+
+    // Style inline nhẹ để đảm bảo hiển thị đẹp ngay cả khi chưa sửa CSS nhiều
+    card.style.border = '1px solid #ddd';
+    card.style.borderRadius = '8px';
+    card.style.padding = '15px';
+    card.style.marginBottom = '15px';
+    card.style.backgroundColor = '#fff';
+    card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.05)';
+    
+    // Border trái phân biệt màu sắc
+    const statusColor = getStatusColor(appt.status);
+    card.style.borderLeft = `5px solid ${statusColor}`;
+
+    // Format ngày giờ
+    const dateObj = new Date(appt.time);
+    const timeStr = dateObj.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = dateObj.toLocaleDateString('vi-VN');
+
+    // Xử lý status
+    const statusText = translateStatus(appt.status);
+
+    // Xử lý Kết quả xét nghiệm (Chỉ hiện khi có dữ liệu)
+    let testResultHtml = '';
+    if (appt.testResults) {
+        testResultHtml = `
+            <div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #eee;">
+                <strong style="color: #0093E9;"><i class="fa-solid fa-microscope"></i> KẾT QUẢ XÉT NGHIỆM:</strong>
+                <p style="background: #f0f9ff; padding: 10px; border-radius: 4px; color: #333; margin-top: 5px;">
+                    ${appt.testResults}
+                </p>
+            </div>
+        `;
+    } else if (appt.status === 'COMPLETED') {
+        testResultHtml = `
+            <div style="margin-top: 10px; font-style: italic; color: #999;">
+                (Chưa cập nhật chi tiết kết quả xét nghiệm lên hệ thống)
+            </div>
+        `;
+    }
+
+    card.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div>
+                <div style="font-size: 0.9em; color: #666;">
+                    <i class="fa-regular fa-clock"></i> ${timeStr} - ${dateStr}
+                </div>
+                <h3 style="margin: 5px 0; color: #333;">${appt.departmentName || 'Chuyên khoa'}</h3>
+                <div style="font-weight: 500;">BS. ${appt.doctorName || 'Chưa chỉ định'}</div>
+            </div>
+            <span style="background:${statusColor}; color:white; padding: 4px 10px; border-radius: 12px; font-size: 0.8em; font-weight: bold;">
+                ${statusText}
+            </span>
+        </div>
+        
+        ${appt.notes ? `<div style="color: #555; font-size: 0.95em;"><strong>Ghi chú:</strong> ${appt.notes}</div>` : ''}
+        
+        ${testResultHtml}
+    `;
+
+    return card;
+}
+
+// --- Helper Functions ---
+
+function translateStatus(status) {
+    const map = {
+        'PENDING': 'Chờ xác nhận',
+        'CONFIRMED': 'Đã xác nhận',
+        'COMPLETED': 'Đã hoàn thành',
+        'CANCELLED': 'Đã hủy'
+    };
+    return map[status] || status;
+}
+
+function getStatusColor(status) {
+    const map = {
+        'PENDING': '#f59e0b',    // Vàng cam
+        'CONFIRMED': '#3b82f6',  // Xanh dương
+        'COMPLETED': '#10b981',  // Xanh lá
+        'CANCELLED': '#ef4444'   // Đỏ
+    };
+    return map[status] || '#9ca3af'; // Xám
+}

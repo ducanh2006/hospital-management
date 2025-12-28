@@ -42,7 +42,7 @@ public class DoctorController {
 
     // 3. Lấy chi tiết một bác sĩ theo ID
     @GetMapping("/{id}")
-    public ResponseEntity<DoctorEntity> get(@PathVariable Integer id) {
+    public ResponseEntity<DoctorDTO> get(@PathVariable Integer id) {
         return service.findById(id) // Sử dụng findById(id) có kiểm tra null
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());

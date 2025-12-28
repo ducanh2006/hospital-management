@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import com.hospital.entity.AppointmentEntity;
+import com.hospital.dto.AppointmentHistoryDTO;
 import com.hospital.entity.PatientEntity;
 import com.hospital.repository.PatientRepository;
 
@@ -28,11 +28,11 @@ public class PatientService {
     }
 
     // Query lấy lịch sử khám của bệnh nhân
-    public List<AppointmentEntity> getAppointmentHistory(Long identityNumber) {
+    public List<AppointmentHistoryDTO> getAppointmentHistory(Long identityNumber) {
         if (!repo.existsById(identityNumber)) {
             throw new EntityNotFoundException("Patient not found with id=" + identityNumber);
         }
-        return repo.findAppointmentsByIdentityNumber(identityNumber);
+        return repo.findAppointmentHistoryByIdentityNumber(identityNumber);
     }
 
     public PatientEntity save(PatientEntity patient) {

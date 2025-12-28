@@ -29,11 +29,11 @@ public class DoctorService {
         return repo.findAllDoctorsWithRating();
     }
 
-    public Optional<DoctorEntity> findById(Integer id) {
+    public Optional<DoctorDTO> findById(Integer id) {
         if(id == null){
             throw new IllegalArgumentException("Doctor id must not be null");
         }
-        return repo.findById(id);
+        return repo.findByIdDoctorsWithRating(id);
     }
 
     // Query tìm lịch hẹn chưa hoàn thành của bác sĩ
