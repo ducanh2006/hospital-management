@@ -64,7 +64,7 @@ public interface DoctorRepository extends JpaRepository<DoctorEntity, Integer> {
                 LEFT JOIN AppointmentEntity a
                     ON a.doctorId = d.id
                     AND a.status = com.hospital.dto.AppointmentStatus.COMPLETED
-                WHERE a.doctorId = :doctorId
+                WHERE d.id = :doctorId
                 GROUP BY d.id, d.fullName, d.gender, d.specialization,
                         d.dateOfBirth, d.departmentId,
                         d.email, d.phone, d.bio,
