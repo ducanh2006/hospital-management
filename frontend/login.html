@@ -3,91 +3,338 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Đăng nhập Admin</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>Đăng nhập hệ thống - Bệnh viện Ánh Dương</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-container {
+      background-color: #fff;
+      padding: 40px;
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .tabs {
+      display: flex;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+      color: #777;
+      transition: all 0.3s;
+      outline: none;
+    }
+
+    .tab-btn.active {
+      color: #007bff;
+      border-bottom: 3px solid #007bff;
+    }
+
+    h2 {
+      margin-top: 0;
+      margin-bottom: 20px;
+      color: #333;
+      text-align: center;
+    }
+
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 15px;
+      outline: none;
+      box-sizing: border-box; /* Quan trọng để padding không làm vỡ layout */
+      transition: 0.3s;
+    }
+
+    .form-control:focus {
+      border-color: #007bff;
+      box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .btn-submit:hover {
+      background-color: #0056b3;
+    }
+
+    .btn-submit:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Thông báo lỗi/thành công */
+    .alert {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 6px;
+      font-size: 14px;
+      display: none;
+      text-align: center;
+    }
+
+    .alert-danger {
+      background-color: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .alert-success {
+      background-color: #dcfce7;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
 </head>
 <body>
+
   <div class="login-container">
-    <div class="login-box">
-      <h2>Đăng nhập vào hệ thống</h2>
-      <form action="admin.html" method="GET">
-        <div class="textbox">
-          <input type="text" placeholder="Tên đăng nhập" name="username" required>
-        </div>
-        <div class="textbox">
-          <input type="password" placeholder="Mật khẩu" name="password" required>
-        </div>
-        <input type="submit" value="Đăng nhập" class="btn-login">
-      </form>
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab('login')">Đăng nhập</button>
+      <button class="tab-btn" onclick="switchTab('register')">Đăng ký</button>
     </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <h2>Đăng nhập</h2>
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="loginUser" class="form-control" placeholder="Nhập username" required>
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="loginPass" class="form-control" placeholder="Nhập mật khẩu" required>
+      </div>
+      <button type="submit" class="btn-submit" id="btnLogin">Đăng nhập</button>
+    </form>
+
+    <form id="registerForm" class="hidden" onsubmit="handleRegister(event)">
+      <h2>Tạo tài khoản mới</h2>
+      <div class="form-group">
+        <label>Tên đăng nhập</label>
+        <input type="text" id="regUser" class="form-control" placeholder="Chọn username" required>
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="regPass" class="form-control" placeholder="Nhập mật khẩu" required>
+      </div>
+      <div class="form-group">
+        <label>Nhập lại mật khẩu</label>
+        <input type="password" id="regPassConfirm" class="form-control" placeholder="Xác nhận mật khẩu" required>
+      </div>
+      <button type="submit" class="btn-submit" id="btnReg">Đăng ký</button>
+    </form>
   </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/api';
+
+    // --- 1. Xử lý chuyển Tab ---
+    function switchTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const btns = document.querySelectorAll('.tab-btn');
+      const alertBox = document.getElementById('alertBox');
+
+      alertBox.style.display = 'none'; // Ẩn thông báo cũ
+
+      if (tab === 'login') {
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+        btns[0].classList.add('active');
+        btns[1].classList.remove('active');
+      } else {
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+        btns[0].classList.remove('active');
+        btns[1].classList.add('active');
+      }
+    }
+
+    // --- 2. Hàm hiển thị thông báo ---
+    function showAlert(message, type = 'error') {
+      const box = document.getElementById('alertBox');
+      box.textContent = message;
+      box.style.display = 'block';
+      
+      if (type === 'success') {
+        box.className = 'alert alert-success';
+      } else {
+        box.className = 'alert alert-danger';
+      }
+    }
+
+    // --- 3. Xử lý Đăng Nhập ---
+    async function handleLogin(e) {
+      e.preventDefault();
+      
+      const username = document.getElementById('loginUser').value.trim();
+      const password = document.getElementById('loginPass').value;
+      const btn = document.getElementById('btnLogin');
+
+      if (!username || !password) {
+        showAlert("Vui lòng nhập đầy đủ thông tin.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Đang xử lý...";
+
+      try {
+        const response = await fetch(`${API_BASE}/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (response.ok) {
+          // Thành công: Nhận JSON chứa token
+          const data = await response.json();
+          
+          if (data.token) {
+            // Lưu token vào localStorage
+            localStorage.setItem('token', data.token);
+            // Có thể lưu thêm username để hiển thị
+            localStorage.setItem('username', username);
+            
+            showAlert("Đăng nhập thành công! Đang chuyển hướng...", "success");
+            
+            // Chuyển hướng sau 1s
+            setTimeout(() => {
+              window.location.href = 'admin.html';
+            }, 1000);
+          } else {
+             showAlert("Lỗi: Không nhận được token xác thực.");
+             btn.disabled = false;
+             btn.textContent = "Đăng nhập";
+          }
+        } else {
+          // Lỗi 400 hoặc lỗi khác: Backend trả về text (như yêu cầu)
+          // "Error: Wrong username or password."
+          const errorText = await response.text();
+          showAlert(errorText || "Đăng nhập thất bại.");
+          btn.disabled = false;
+          btn.textContent = "Đăng nhập";
+        }
+      } catch (error) {
+        console.error("Login Error:", error);
+        showAlert("Không thể kết nối đến máy chủ.");
+        btn.disabled = false;
+        btn.textContent = "Đăng nhập";
+      }
+    }
+
+    // --- 4. Xử lý Đăng Ký ---
+    async function handleRegister(e) {
+      e.preventDefault();
+
+      const username = document.getElementById('regUser').value.trim();
+      const password = document.getElementById('regPass').value;
+      const confirmPass = document.getElementById('regPassConfirm').value;
+      const btn = document.getElementById('btnReg');
+
+      if (!username || !password) {
+        showAlert("Vui lòng nhập đầy đủ thông tin.");
+        return;
+      }
+
+      if (password !== confirmPass) {
+        showAlert("Mật khẩu xác nhận không khớp.");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Đang tạo...";
+
+      try {
+        // Dựa vào api-docs.txt: POST /api/accounts để tạo AccountEntity
+        const response = await fetch(`${API_BASE}/accounts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (response.ok) {
+          showAlert("Tạo tài khoản thành công! Vui lòng đăng nhập.", "success");
+          
+          // Reset form và chuyển qua tab đăng nhập
+          document.getElementById('registerForm').reset();
+          setTimeout(() => {
+            switchTab('login');
+            // Điền sẵn username vừa tạo để tiện đăng nhập
+            document.getElementById('loginUser').value = username;
+          }, 1500);
+          
+        } else {
+          // Có thể backend trả về lỗi nếu trùng username
+          // Nếu backend trả JSON lỗi hoặc text, ta cố gắng đọc
+          try {
+             const errText = await response.text();
+             showAlert("Đăng ký thất bại: " + errText); 
+          } catch (e) {
+             showAlert("Đăng ký thất bại. Tên đăng nhập có thể đã tồn tại.");
+          }
+        }
+      } catch (error) {
+        console.error("Register Error:", error);
+        showAlert("Lỗi kết nối khi tạo tài khoản.");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Đăng ký";
+      }
+    }
+  </script>
 </body>
 </html>
-
-
-<style>
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f2f5;
-    margin: 0;
-    padding: 0;
-}
-
-.login-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background: linear-gradient(to right, #007bff, #0056b3);
-}
-
-.login-box {
-    background-color: #fff;
-    padding: 40px;
-    width: 400px;
-    border-radius: 10px;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-.login-box h2 {
-    margin-bottom: 20px;
-    color: #333;
-}
-
-.textbox {
-    margin-bottom: 20px;
-    position: relative;
-}
-
-.textbox input {
-    width: 100%;
-    padding: 10px;
-    padding-left: 20px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 16px;
-    outline: none;
-    transition: 0.3s;
-}
-
-.textbox input:focus {
-    border-color: #0056b3;
-}
-
-.btn-login {
-    width: 100%;
-    padding: 10px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 18px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.btn-login:hover {
-    background-color: #0056b3;
-}
-</style>

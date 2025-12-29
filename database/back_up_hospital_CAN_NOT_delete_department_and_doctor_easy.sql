@@ -1,3 +1,4 @@
+-- database không cho phép xóa bác sĩ và phong ban một cách đơn giản
 -- MySQL dump 10.13  Distrib 9.1.0, for Win64 (x86_64)
 --
 -- Host: localhost    Database: hospital
@@ -61,6 +62,7 @@ CREATE TABLE `appointment` (
   `status` enum('PENDING','CONFIRMED','CANCELLED','COMPLETED') NOT NULL DEFAULT 'PENDING',
   `notes` varchar(500) DEFAULT NULL,
   `last_update` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `test_results` TEXT,
   PRIMARY KEY (`id`),
   KEY `fk_appt_doctor` (`doctor_id`),
   KEY `fk_appt_patient` (`patient_identity_number`),
@@ -79,7 +81,27 @@ CREATE TABLE `appointment` (
 
 LOCK TABLES `appointment` WRITE;
 /*!40000 ALTER TABLE `appointment` DISABLE KEYS */;
-INSERT INTO `appointment` VALUES (1,1,123456789001,3,5,'2025-11-10 08:00:00','COMPLETED','Khám tốt, bác sĩ tận tình','2025-12-27 08:36:04'),(2,2,123456789002,4,4,'2025-11-10 09:00:00','COMPLETED','Phẫu thuật thành công','2025-12-27 08:36:04'),(3,3,123456789003,5,3,'2025-11-10 10:00:00','COMPLETED','Điều trị tạm được','2025-12-27 08:36:04'),(4,4,123456789004,4,2,'2025-11-10 11:00:00','COMPLETED','Cần theo dõi thêm','2025-12-27 08:36:04'),(5,5,123456789005,3,1,'2025-11-11 08:30:00','COMPLETED','Nghỉ việc đi','2025-12-27 08:36:04'),(6,6,123456789001,2,5,'2025-11-11 09:30:00','COMPLETED','Xử lý ca cấp cứu tốt','2025-12-27 08:36:04'),(7,7,123456789002,1,4,'2025-11-11 10:30:00','COMPLETED','Giải thích rõ ràng','2025-12-27 08:36:04'),(8,8,123456789003,2,5,'2025-11-11 11:30:00','COMPLETED','Chẩn đoán chính xác','2025-12-27 08:36:04'),(9,9,123456789004,2,4,'2025-11-12 08:00:00','COMPLETED','Phẫu thuật thành công','2025-12-27 08:36:04'),(10,10,123456789005,1,5,'2025-11-12 09:00:00','COMPLETED','Điều trị hiệu quả','2025-12-27 08:36:04'),(11,1,123456789002,3,4,'2025-11-12 10:00:00','COMPLETED','Khám kỹ lưỡng','2025-12-27 08:36:04'),(12,2,123456789003,4,5,'2025-11-12 11:00:00','COMPLETED','Rất hài lòng','2025-12-27 08:36:04'),(13,3,123456789004,5,3,'2025-11-13 08:30:00','COMPLETED','Cần cải thiện thời gian chờ','2025-12-27 08:36:04'),(14,4,123456789005,4,1,'2025-11-13 09:30:00','COMPLETED','Chuyên môn yếu kém','2025-12-27 08:36:04'),(15,5,123456789001,3,5,'2025-11-13 10:30:00','COMPLETED','Rất chuyên nghiệp','2025-12-27 08:36:04'),(16,6,123456789002,2,NULL,'2025-11-14 08:00:00','PENDING','Chờ xác nhận','2025-12-27 08:36:04'),(17,7,123456789003,1,NULL,'2025-11-14 09:00:00','CONFIRMED','Đã xác nhận lịch','2025-12-27 08:36:04'),(18,8,123456789004,2,NULL,'2025-11-14 10:00:00','CONFIRMED','Chuẩn bị khám','2025-12-27 08:36:04'),(19,9,123456789005,2,NULL,'2025-11-14 11:00:00','CANCELLED','Bệnh nhân huỷ lịch','2025-12-27 08:36:04'),(20,10,123456789001,1,NULL,'2025-11-15 08:30:00','PENDING','Đặt lịch lần đầu','2025-12-27 08:36:04');
+INSERT INTO `appointment` VALUES 
+(1,1,123456789001,3,5,'2025-11-10 08:00:00','COMPLETED','Khám tốt, bác sĩ tận tình','2025-12-27 08:36:04','{"blood_pressure": "120/80", "cholesterol": "Normal", "notes": "Healthy patient"}'),
+(2,2,123456789002,4,4,'2025-11-10 09:00:00','COMPLETED','Phẫu thuật thành công','2025-12-27 08:36:04','{"surgery_report": "Appendectomy successful", "recovery_status": "Stable"}'),
+(3,3,123456789003,5,3,'2025-11-10 10:00:00','COMPLETED','Điều trị tạm được','2025-12-27 08:36:04','{"symptoms": "Reduced fever", "medication": "Paracetamol prescribed"}'),
+(4,4,123456789004,4,2,'2025-11-10 11:00:00','COMPLETED','Cần theo dõi thêm','2025-12-27 08:36:04','{"blood_test": "Slightly elevated glucose", "follow_up": "Recommended in 1 week"}'),
+(5,5,123456789005,3,1,'2025-11-11 08:30:00','COMPLETED','Nghỉ việc đi','2025-12-27 08:36:04','{"diagnosis": "Severe stress", "recommendation": "Medical leave 7 days"}'),
+(6,6,123456789001,2,5,'2025-11-11 09:30:00','COMPLETED','Xử lý ca cấp cứu tốt','2025-12-27 08:36:04','{"emergency_notes": "Stabilized after trauma", "vitals": "BP 130/85, HR 78"}'),
+(7,7,123456789002,1,4,'2025-11-11 10:30:00','COMPLETED','Giải thích rõ ràng','2025-12-27 08:36:04','{"consultation_summary": "Allergies confirmed", "treatment_plan": "Antihistamine"}'),
+(8,8,123456789003,2,5,'2025-11-11 11:30:00','COMPLETED','Chẩn đoán chính xác','2025-12-27 08:36:04','{"x_ray": "Pneumonia detected", "antibiotics": "Prescribed for 7 days"}'),
+(9,9,123456789004,2,4,'2025-11-12 08:00:00','COMPLETED','Phẫu thuật thành công','2025-12-27 08:36:04','{"surgery_type": "Knee arthroscopy", "outcome": "Successful"}'),
+(10,10,123456789005,1,5,'2025-11-12 09:00:00','COMPLETED','Điều trị hiệu quả','2025-12-27 08:36:04','{"therapy_response": "Excellent", "next_visit": "2025-12-10"}'),
+(11,1,123456789002,3,4,'2025-11-12 10:00:00','COMPLETED','Khám kỹ lưỡng','2025-12-27 08:36:04','{"ecg": "Normal sinus rhythm", "cholesterol": "Borderline high"}'),
+(12,2,123456789003,4,5,'2025-11-12 11:00:00','COMPLETED','Rất hài lòng','2025-12-27 08:36:04','{"all_tests": "Within normal range", "patient_feedback": "Very satisfied"}'),
+(13,3,123456789004,5,3,'2025-11-13 08:30:00','COMPLETED','Cần cải thiện thời gian chờ','2025-12-27 08:36:04','{"urinalysis": "UTI detected", "antibiotics": "Prescribed"}'),
+(14,4,123456789005,4,1,'2025-11-13 09:30:00','COMPLETED','Chuyên môn yếu kém','2025-12-27 08:36:04','{"diagnosis_delayed": true, "recommendation": "Second opinion advised"}'),
+(15,5,123456789001,3,5,'2025-11-13 10:30:00','COMPLETED','Rất chuyên nghiệp','2025-12-27 08:36:04','{"mri": "No abnormalities", "conclusion": "Healthy"}'),
+(16,6,123456789002,2,NULL,'2025-11-14 08:00:00','PENDING','Chờ xác nhận','2025-12-27 08:36:04',NULL),
+(17,7,123456789003,1,NULL,'2025-11-14 09:00:00','CONFIRMED','Đã xác nhận lịch','2025-12-27 08:36:04',NULL),
+(18,8,123456789004,2,NULL,'2025-11-14 10:00:00','CONFIRMED','Chuẩn bị khám','2025-12-27 08:36:04',NULL),
+(19,9,123456789005,2,NULL,'2025-11-14 11:00:00','CANCELLED','Bệnh nhân huỷ lịch','2025-12-27 08:36:04',NULL),
+(20,10,123456789001,1,NULL,'2025-11-15 08:30:00','PENDING','Đặt lịch lần đầu','2025-12-27 08:36:04',NULL);
 /*!40000 ALTER TABLE `appointment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -241,3 +263,14 @@ UNLOCK TABLES;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
 -- Dump completed on 2025-12-27  8:41:23
+
+
+use hospital;
+show tables;
+SELECT * FROM account;
+SELECT * FROM department;
+SELECT * FROM picture;
+SELECT * FROM doctor;
+SELECT * FROM patient;
+SELECT * FROM appointment;
+SELECT * FROM medical_news;

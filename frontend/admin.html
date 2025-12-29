@@ -1,68 +1,743 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Trang quản trị - Bệnh viện Ánh Dương</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trang quản trị - Bệnh viện Ánh Dương</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%);
+            --header-bg: #ffffff;
+            --text-color: #333;
+            --text-muted: #777;
+            --bg-body: #f3f4f6;
+            --white: #ffffff;
+            --border-color: #e5e7eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
 
-  <link rel="stylesheet" href="admin.css">
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--bg-body); color: var(--text-color); }
+
+        /* --- 1. HEADER (Phần trắng) --- */
+        .top-header {
+            background: var(--white);
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 40px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .brand-area { display: flex; align-items: center; gap: 15px; }
+
+        .logo-circle {
+            width: 50px; height: 50px; border-radius: 50%; overflow: hidden;
+            display: flex; align-items: center; justify-content: center;
+            background: #2ecc71; box-shadow: 0 4px 10px rgba(46, 204, 113, 0.3);
+        }
+        .logo-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+        .brand-text h1 { font-size: 20px; font-weight: 700; color: #1f2937; line-height: 1.2; }
+        .brand-text p { font-size: 13px; color: var(--text-muted); }
+
+        .user-area { display: flex; align-items: center; gap: 20px; }
+
+        .user-info { display: flex; align-items: center; gap: 10px; cursor: pointer; position: relative; }
+
+        .user-avatar {
+            width: 40px; height: 40px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white; display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 18px;
+        }
+
+        .btn-logout {
+            border: 1px solid var(--info); background: white; color: var(--info);
+            padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .btn-logout:hover { background: var(--info); color: white; }
+
+        /* --- 2. NAV BAR (Phần xanh tím) --- */
+        .main-nav {
+            background: var(--primary-gradient); padding: 0 40px; height: 50px;
+            display: flex; align-items: flex-end;
+        }
+
+        .nav-item {
+            color: rgba(255,255,255,0.8); padding: 14px 20px; cursor: pointer;
+            font-weight: 600; font-size: 15px; transition: all 0.2s;
+            border-radius: 8px 8px 0 0; margin-right: 5px;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; }
+        .nav-item.active { background: var(--white); color: #4c1d95; border-bottom: 3px solid transparent; }
+
+        /* --- 3. CONTENT --- */
+        .container { padding: 30px 40px; max-width: 1440px; margin: 0 auto; }
+        .card {
+            background: var(--white); border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); padding: 24px; min-height: 500px;
+        }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .section-title { font-size: 22px; font-weight: 700; color: #111827; }
+
+        .btn-primary {
+            background: var(--info); color: white; border: none; padding: 10px 20px;
+            border-radius: 8px; font-weight: 600; cursor: pointer; display: flex;
+            align-items: center; gap: 8px; transition: 0.2s;
+        }
+        .btn-primary:hover { background: #2563eb; }
+
+        /* TABLE */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; }
+        th {
+            text-align: left; padding: 14px 16px; background: #f9fafb; color: #6b7280;
+            font-weight: 600; border-bottom: 1px solid var(--border-color); white-space: nowrap;
+        }
+        td { padding: 14px 16px; border-bottom: 1px solid var(--border-color); color: #374151; vertical-align: middle; }
+        tr:hover { background-color: #f9fafb; }
+
+        .action-btns { display: flex; gap: 8px; }
+        .btn-icon {
+            width: 32px; height: 32px; border-radius: 6px; border: none;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.2s;
+        }
+        .btn-edit { background: #eff6ff; color: var(--info); }
+        .btn-edit:hover { background: var(--info); color: white; }
+        .btn-delete { background: #fef2f2; color: var(--danger); }
+        .btn-delete:hover { background: var(--danger); color: white; }
+
+        .doc-thumb {
+            width: 40px; height: 40px; border-radius: 50%; object-fit: cover;
+            border: 2px solid #eee; background: #f3f3f3;
+        }
+
+        /* BADGE & FORM */
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .bg-pending { background: #fffbeb; color: #b45309; }
+        .bg-confirmed { background: #eff6ff; color: #1d4ed8; }
+        .bg-completed { background: #ecfdf5; color: #047857; }
+        .bg-cancelled { background: #fef2f2; color: #b91c1c; }
+
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: none; align-items: center; justify-content: center; z-index: 1000;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-box {
+            background: white; width: 600px; max-width: 90%; border-radius: 12px;
+            padding: 24px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .modal-title { font-size: 18px; font-weight: 700; }
+        .btn-close { background: none; border: none; font-size: 20px; cursor: pointer; color: #999; }
+
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group.full { grid-column: span 2; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 14px; }
+        .form-control { width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; outline: none; transition: border-color 0.2s; }
+        .form-control:focus { border-color: var(--info); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+        .modal-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #eee; display: flex; justify-content: flex-end; gap: 10px; }
+        .btn-secondary { background: #f3f4f6; color: #374151; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; }
+        .btn-secondary:hover { background: #e5e7eb; }
+
+        .img-preview {
+            width: 80px; height: 80px; border-radius: 8px; object-fit: cover;
+            border: 2px dashed #ccc; margin-top: 10px; display: block;
+        }
+
+        /* TOAST & USER DROPDOWN */
+        .toast { position: fixed; bottom: 30px; right: 30px; padding: 12px 24px; background: #333; color: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); transform: translateY(100px); opacity: 0; transition: 0.3s; z-index: 2000; }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: var(--success); }
+        .toast.error { background: var(--danger); }
+
+        .user-dropdown { position: absolute; top: 50px; right: 0; background: white; border-radius: 8px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 200px; display: none; z-index: 100; border: 1px solid #eee; }
+        .user-dropdown.show { display: block; }
+        .dropdown-item { padding: 12px 16px; border-bottom: 1px solid #f3f4f6; cursor: pointer; font-size: 14px; }
+        .dropdown-item:hover { background: #f9fafb; color: var(--info); }
+
+        @media (max-width: 768px) {
+            .top-header { padding: 0 20px; }
+            .main-nav { overflow-x: auto; padding: 0 20px; }
+            .container { padding: 20px; }
+            .form-grid { grid-template-columns: 1fr; }
+            .form-group.full { grid-column: span 1; }
+        }
+    </style>
 </head>
 <body>
 
-<div class="page">
-  <!-- HEADER -->
-  <header class="topbar">
-    <div class="container">
-      <div class="topbar-inner">
-        <div class="brand">
-          <div class="logo"><span>+</span></div>
-          <div class="brand-text">
-            <b>Bệnh viện Ánh Dương</b>
-            <span>Trang quản trị hệ thống</span>
-          </div>
-        </div>
-
-        <div class="search-top">
-          <div class="search-box">
-            <div class="search-icon"></div>
-            <input type="text" placeholder="Tìm bệnh nhân, bác sĩ, lịch hẹn..." />
-          </div>
+    <header class="top-header">
+        <div class="brand-area">
+            <div class="logo-circle">
+                <img src="http://localhost:8080/uploads/logo.png" alt="Logo" onerror="this.style.display='none';this.parentElement.innerHTML='<i class=\'fas fa-plus fa-lg\' style=\'color:white\'></i>'">
+            </div>
+            <div class="brand-text">
+                <h1>Bệnh viện Ánh Dương</h1>
+                <p>Trang quản trị hệ thống</p>
+            </div>
         </div>
 
         <div class="user-area">
-          <div>
-            <div class="user-role" id="userRole"></div>
-            <div class="user-name" id="userName"></div>
-          </div>
-          <div class="avatar" id="userAvatar"></div>
-          <button class="btn-outline">Đăng xuất</button>
+            <div class="user-info" onclick="toggleUserDropdown()">
+                <div class="user-avatar" id="avatarText">A</div>
+                <div class="user-dropdown" id="userDropdown">
+                    <div class="dropdown-item" onclick="openPasswordModal()">
+                        <i class="fas fa-key"></i> Đổi mật khẩu
+                    </div>
+                </div>
+            </div>
+            <button class="btn-logout" onclick="logout()">Đăng xuất</button>
         </div>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="container">
-      <div class="nav-inner">
-        <div class="nav-link" data-section="patients">Quản lý bệnh nhân</div>
-        <div class="nav-link" data-section="doctors">Quản lý bác sĩ</div>
-        <div class="nav-link" data-section="departments">Quản lý khoa</div>
-        <div class="nav-link" data-section="appointments">Quản lý lịch hẹn</div>
-      </div>
-    </div>
-  </nav>
+    <nav class="main-nav">
+        <div class="nav-item active" onclick="switchTab('patients', this)">Quản lý bệnh nhân</div>
+        <div class="nav-item" onclick="switchTab('doctors', this)">Quản lý bác sĩ</div>
+        <div class="nav-item" onclick="switchTab('departments', this)">Quản lý khoa</div>
+        <div class="nav-item" onclick="switchTab('appointments', this)">Quản lý lịch hẹn</div>
+        <div class="nav-item" onclick="switchTab('news', this)">Quản lý tin tức</div>
+    </nav>
 
-  <!-- MAIN -->
-  <main class="main">
-    <div class="container">
-      <section class="panel" id="panelContent">
-        <!-- partial sẽ load vào đây -->
-      </section>
-    </div>
-  </main>
-</div>
+    <main class="container">
+        <div class="card">
+            <div class="section-header">
+                <h2 class="section-title" id="pageTitle">Danh sách Bệnh nhân</h2>
+                <button class="btn-primary" onclick="openModal()">
+                    <i class="fas fa-plus"></i> Thêm mới
+                </button>
+            </div>
 
-<script src="admin.js"></script>
+            <div class="table-container">
+                <table id="mainTable">
+                    <thead></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <div id="loading" style="text-align: center; padding: 20px; display: none;">
+                <i class="fas fa-spinner fa-spin fa-2x" style="color: var(--info)"></i>
+            </div>
+        </div>
+    </main>
+
+    <div class="modal-overlay" id="formModal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modalTitle">Thêm mới</h3>
+                <button class="btn-close" onclick="closeModal('formModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="dynamicForm">
+                    </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('formModal')">Hủy</button>
+                <button class="btn-primary" onclick="submitForm()">Lưu lại</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="passwordModal">
+        <div class="modal-box" style="width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Đổi mật khẩu</h3>
+                <button class="btn-close" onclick="closeModal('passwordModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="passwordForm">
+                    <div class="form-group">
+                        <label class="form-label">Mật khẩu mới</label>
+                        <input type="password" id="newPass" class="form-control" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal('passwordModal')">Hủy</button>
+                <button class="btn-primary" onclick="changePassword()">Cập nhật</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Thông báo</div>
+
+    <script>
+        // --- 1. CONFIG & STATE ---
+        const API_BASE = 'http://localhost:8080/api';
+        const UPLOAD_BASE = 'http://localhost:8080/uploads';
+        let CURRENT_TAB = 'patients';
+        let IS_EDIT = false;
+        let EDIT_ID = null;
+        let CURRENT_DATA = [];
+        
+        let CACHE_DEPTS = []; 
+        let CACHE_DOCTORS = [];
+
+        // --- 2. AUTHENTICATION ---
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'login.html';
+
+        function parseJwt(token) {
+            try {
+                const base64Url = token.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                return JSON.parse(jsonPayload);
+            } catch (e) { return null; }
+        }
+        const userPayload = parseJwt(token);
+        const currentUserId = userPayload ? userPayload.sub : null;
+        if(userPayload) document.getElementById('avatarText').textContent = userPayload.sub.substring(0,1).toUpperCase();
+
+        function logout() {
+            localStorage.removeItem('token');
+            window.location.href = 'login.html';
+        }
+
+        // --- 3. API HELPER ---
+        async function fetchAPI(endpoint, method = 'GET', body = null) {
+            const headers = { 'Authorization': `Bearer ${token}` };
+            if (!(body instanceof FormData)) {
+                headers['Content-Type'] = 'application/json';
+            }
+            if (body && !(body instanceof FormData)) {
+                body = JSON.stringify(body);
+            }
+
+            try {
+                const res = await fetch(API_BASE + endpoint, { method, headers, body });
+                if (res.status === 401) logout();
+                if (!res.ok) {
+                    const text = await res.text();
+                    throw new Error(text || res.statusText);
+                }
+                const text = await res.text();
+                return text ? JSON.parse(text) : {};
+            } catch (err) {
+                showToast(err.message, 'error');
+                console.error(err);
+                return null;
+            }
+        }
+
+        // --- 4. NAVIGATION & INIT ---
+        document.addEventListener('DOMContentLoaded', () => {
+            preloadCache();
+            loadData('patients');
+        });
+
+        async function preloadCache() {
+            CACHE_DEPTS = await fetchAPI('/departments') || [];
+            CACHE_DOCTORS = await fetchAPI('/doctors') || []; 
+        }
+
+        function switchTab(tab, el) {
+            CURRENT_TAB = tab;
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            el.classList.add('active');
+
+            const titles = {
+                'patients': 'Danh sách Bệnh nhân',
+                'doctors': 'Danh sách Bác sĩ',
+                'departments': 'Danh sách Khoa',
+                'appointments': 'Danh sách Lịch hẹn',
+                'news': 'Danh sách Tin tức'
+            };
+            document.getElementById('pageTitle').textContent = titles[tab];
+            loadData(tab);
+        }
+
+        async function loadData(tab) {
+            const loading = document.getElementById('loading');
+            const tbody = document.querySelector('#mainTable tbody');
+            loading.style.display = 'block';
+            tbody.innerHTML = '';
+
+            let endpoint = '';
+            if (tab === 'patients') endpoint = '/patients';
+            else if (tab === 'doctors') endpoint = '/doctors';
+            else if (tab === 'departments') endpoint = '/departments';
+            else if (tab === 'appointments') endpoint = '/appointments';
+            else if (tab === 'news') endpoint = '/medical-news';
+
+            const data = await fetchAPI(endpoint);
+            loading.style.display = 'none';
+
+            if (Array.isArray(data)) {
+                CURRENT_DATA = data;
+                renderTable(data);
+                // Sau khi render bảng, load ảnh cho bác sĩ
+                if(tab === 'doctors') loadDoctorImages();
+            } else {
+                CURRENT_DATA = [];
+                renderTable([]);
+            }
+        }
+
+        // --- 5. RENDER TABLE ---
+        function renderTable(data) {
+            const thead = document.querySelector('#mainTable thead');
+            const tbody = document.querySelector('#mainTable tbody');
+            thead.innerHTML = '';
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 30px;">Không có dữ liệu</td></tr>';
+                return;
+            }
+
+            let cols = [];
+            if (CURRENT_TAB === 'patients') {
+                cols = [
+                    { header: 'CCCD', key: 'identityNumber' },
+                    { header: 'Họ tên', key: 'fullName' },
+                    { header: 'Giới tính', key: 'gender', render: v => v === 'MALE' ? 'Nam' : (v === 'FEMALE' ? 'Nữ' : 'Khác') },
+                    { header: 'SĐT', key: 'phone' },
+                    { header: 'Địa chỉ', key: 'address' }
+                ];
+            } else if (CURRENT_TAB === 'doctors') {
+                cols = [
+                    { header: 'ID', key: 'id' },
+                    { header: 'Ảnh', key: 'pictureId', render: (v, item) => `<img src="" data-pid="${v}" class="doc-thumb doc-thumb-loading" alt="img">` }, // Placeholder
+                    { header: 'Họ tên', key: 'fullName' },
+                    { header: 'Chuyên môn', key: 'specialization' },
+                    { header: 'Khoa', key: 'departmentId', render: id => (CACHE_DEPTS.find(d => d.id === id)?.name || id) },
+                    { header: 'SĐT', key: 'phone' }
+                ];
+            } else if (CURRENT_TAB === 'departments') {
+                cols = [
+                    { header: 'ID', key: 'id' },
+                    { header: 'Tên khoa', key: 'name' },
+                    { header: 'SĐT', key: 'phone' },
+                    { header: 'Trưởng khoa', key: 'headDoctorId', render: id => (CACHE_DOCTORS.find(d => d.id === id)?.fullName || 'Chưa có') }
+                ];
+            } else if (CURRENT_TAB === 'appointments') {
+                cols = [
+                    { header: 'Mã LH', key: 'id' },
+                    { header: 'CCCD Bệnh nhân', key: 'patientIdentityNumber' },
+                    { header: 'Bác sĩ', key: 'doctorId', render: id => (CACHE_DOCTORS.find(d => d.id === id)?.fullName || id) },
+                    { header: 'Thời gian', key: 'time', render: v => new Date(v).toLocaleString('vi-VN') },
+                    { header: 'Trạng thái', key: 'status', render: v => `<span class="badge bg-${v.toLowerCase()}">${v}</span>` }
+                ];
+            } else if (CURRENT_TAB === 'news') {
+                cols = [
+                    { header: 'ID', key: 'id' },
+                    { header: 'Tiêu đề', key: 'title' },
+                    { header: 'Ngày cập nhật', key: 'lastUpdate', render: v => new Date(v).toLocaleDateString('vi-VN') }
+                ];
+            }
+
+            let headHtml = '<tr>';
+            cols.forEach(c => headHtml += `<th>${c.header}</th>`);
+            headHtml += '<th style="width:100px">Thao tác</th></tr>';
+            thead.innerHTML = headHtml;
+
+            data.forEach(item => {
+                let id = item.id;
+                if (CURRENT_TAB === 'patients') id = item.identityNumber;
+
+                let rowHtml = '<tr>';
+                cols.forEach(c => {
+                    let val = item[c.key];
+                    if (c.render) val = c.render(val, item);
+                    if (val === null || val === undefined) val = '';
+                    rowHtml += `<td>${val}</td>`;
+                });
+                
+                rowHtml += `
+                    <td>
+                        <div class="action-btns">
+                            <button class="btn-icon btn-edit" title="Sửa" onclick="openEditModal('${id}')"><i class="fas fa-pen"></i></button>
+                            <button class="btn-icon btn-delete" title="Xóa" onclick="deleteItem('${id}')"><i class="fas fa-trash"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+                tbody.innerHTML += rowHtml;
+            });
+        }
+
+        // Xử lý load ảnh bác sĩ sau khi render bảng để tránh lag
+        function loadDoctorImages() {
+            document.querySelectorAll('.doc-thumb-loading').forEach(async img => {
+                const pid = img.dataset.pid;
+                // Ảnh mặc định
+                let defaultImg = `${UPLOAD_BASE}/doctor-male-1.png`;
+                
+                if (!pid || pid === 'null' || pid === 'undefined') {
+                    img.src = defaultImg;
+                    return;
+                }
+                
+                try {
+                    const res = await fetchAPI(`/pictures/find-by-id?id=${pid}`);
+                    if (res && res.pictureUrl) {
+                        img.src = `${UPLOAD_BASE}/${res.pictureUrl}`;
+                    } else {
+                        img.src = defaultImg;
+                    }
+                } catch(e) {
+                    img.src = defaultImg;
+                }
+                img.classList.remove('doc-thumb-loading');
+            });
+        }
+
+        // --- 6. FORM & MODAL ---
+        const input = (label, name, type='text', val='', req=false, ro=false) => `
+            <div class="form-group">
+                <label class="form-label">${label} ${req ? '<span style="color:red">*</span>' : ''}</label>
+                <input type="${type}" name="${name}" class="form-control" value="${val}" ${req?'required':''} ${ro?'readonly':''}>
+            </div>`;
+        
+        const textarea = (label, name, val='', req=false) => `
+            <div class="form-group full">
+                <label class="form-label">${label} ${req ? '<span style="color:red">*</span>' : ''}</label>
+                <textarea name="${name}" class="form-control" rows="3" ${req?'required':''}>${val}</textarea>
+            </div>`;
+
+        const select = (label, name, options, val='', req=false) => `
+            <div class="form-group">
+                <label class="form-label">${label} ${req ? '<span style="color:red">*</span>' : ''}</label>
+                <select name="${name}" class="form-control" ${req?'required':''}>
+                    <option value="">-- Chọn --</option>
+                    ${options.map(o => `<option value="${o.val}" ${String(o.val) === String(val) ? 'selected' : ''}>${o.txt}</option>`).join('')}
+                </select>
+            </div>`;
+        
+        // Input upload ảnh riêng cho bác sĩ
+        const imageInput = (val) => `
+            <div class="form-group">
+                <label class="form-label">Ảnh đại diện</label>
+                <input type="file" id="docImgInput" class="form-control" accept="image/*" onchange="previewImage(this)">
+                <input type="hidden" name="pictureId" id="hiddenPicId" value="${val || ''}">
+                <img id="imgPreview" class="img-preview" src="${val ? '' : 'https://via.placeholder.com/80?text=No+Img'}">
+            </div>`;
+
+        async function renderForm(data = {}) {
+            const form = document.getElementById('dynamicForm');
+            const v = (k) => data[k] || '';
+            let html = '<div class="form-grid">';
+
+            if (CURRENT_TAB === 'patients') {
+                html += input('Số CCCD (Identity)', 'identityNumber', 'number', v('identityNumber'), true, IS_EDIT);
+                html += input('Họ tên', 'fullName', 'text', v('fullName'), true);
+                html += input('Số điện thoại', 'phone', 'text', v('phone'), true);
+                html += select('Giới tính', 'gender', [{val:'MALE', txt:'Nam'}, {val:'FEMALE', txt:'Nữ'}, {val:'OTHER', txt:'Khác'}], v('gender'));
+                html += input('Ngày sinh', 'dateOfBirth', 'date', v('dateOfBirth'));
+                html += input('Địa chỉ', 'address', 'text', v('address'));
+                html += input('Email', 'email', 'email', v('email'));
+                html += input('BHYT', 'insuranceNumber', 'text', v('insuranceNumber'));
+            
+            } else if (CURRENT_TAB === 'doctors') {
+                html += input('Họ tên', 'fullName', 'text', v('fullName'), true);
+                html += select('Khoa', 'departmentId', CACHE_DEPTS.map(d => ({val: d.id, txt: d.name})), v('departmentId'), true);
+                html += input('Chuyên môn', 'specialization', 'text', v('specialization'), true);
+                html += select('Giới tính', 'gender', [{val:'MALE', txt:'Nam'}, {val:'FEMALE', txt:'Nữ'}], v('gender'));
+                
+                // Phần Upload ảnh
+                html += imageInput(v('pictureId'));
+
+                html += input('Email', 'email', 'email', v('email'));
+                html += input('Số điện thoại', 'phone', 'text', v('phone'));
+                html += input('Kinh nghiệm (năm)', 'experienceYear', 'number', v('experienceYear'));
+                html += textarea('Giới thiệu', 'bio', v('bio'));
+
+                // Nếu đang Edit và có pictureId, load ảnh preview
+                if (v('pictureId')) {
+                    setTimeout(async () => {
+                        const res = await fetchAPI(`/pictures/find-by-id?id=${v('pictureId')}`);
+                        if(res && res.pictureUrl) {
+                            document.getElementById('imgPreview').src = `${UPLOAD_BASE}/${res.pictureUrl}`;
+                        }
+                    }, 100);
+                }
+
+            } else if (CURRENT_TAB === 'departments') {
+                html += input('Tên khoa', 'name', 'text', v('name'), true);
+                html += input('Số điện thoại', 'phone', 'text', v('phone'));
+                html += select('Trưởng khoa', 'headDoctorId', CACHE_DOCTORS.map(d => ({val: d.id, txt: d.fullName})), v('headDoctorId'));
+                html += textarea('Mô tả', 'description', v('description'));
+
+            } else if (CURRENT_TAB === 'appointments') {
+                html += input('CCCD Bệnh nhân', 'patientIdentityNumber', 'number', v('patientIdentityNumber'), true, IS_EDIT);
+                html += select('Bác sĩ', 'doctorId', CACHE_DOCTORS.map(d => ({val: d.id, txt: d.fullName})), v('doctorId'), true);
+                html += input('Thời gian', 'time', 'datetime-local', v('time'), true);
+                html += select('Trạng thái', 'status', [
+                    {val:'PENDING', txt:'Chờ xác nhận'}, {val:'CONFIRMED', txt:'Đã xác nhận'},
+                    {val:'COMPLETED', txt:'Hoàn thành'}, {val:'CANCELLED', txt:'Đã hủy'}
+                ], v('status'), true);
+                html += textarea('Ghi chú', 'notes', v('notes'));
+                html += textarea('Kết quả xét nghiệm', 'testResults', v('testResults'));
+
+            } else if (CURRENT_TAB === 'news') {
+                html += input('Tiêu đề', 'title', 'text', v('title'), true);
+                html += textarea('Nội dung', 'content', v('content'), true);
+            }
+
+            html += '</div>';
+            form.innerHTML = html;
+        }
+
+        function previewImage(input) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imgPreview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        function openModal() {
+            IS_EDIT = false;
+            EDIT_ID = null;
+            document.getElementById('modalTitle').textContent = 'Thêm mới';
+            renderForm({});
+            document.getElementById('formModal').classList.add('active');
+        }
+
+        async function openEditModal(id) {
+            IS_EDIT = true;
+            EDIT_ID = id;
+            document.getElementById('modalTitle').textContent = 'Cập nhật thông tin';
+            
+            let item = CURRENT_DATA.find(x => x.id == id || x.identityNumber == id);
+            
+            // Fetch chi tiết để đầy đủ dữ liệu
+            let endpoint = '';
+            if (CURRENT_TAB === 'patients') endpoint = `/patients/${id}`;
+            else if (CURRENT_TAB === 'doctors') endpoint = `/doctors/${id}`;
+            else if (CURRENT_TAB === 'departments') endpoint = `/departments/${id}`;
+            else if (CURRENT_TAB === 'appointments') endpoint = `/appointments/${id}`;
+            else if (CURRENT_TAB === 'news') endpoint = `/medical-news/${id}`;
+
+            const detail = await fetchAPI(endpoint);
+            if (detail) item = detail;
+
+            renderForm(item);
+            document.getElementById('formModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+            if(id === 'userDropdown') document.getElementById(id).classList.remove('show');
+        }
+
+        async function submitForm() {
+            const form = document.getElementById('dynamicForm');
+            if (!form.checkValidity()) { form.reportValidity(); return; }
+
+            // 1. Xử lý Upload ảnh nếu có (Dành cho Doctors)
+            if (CURRENT_TAB === 'doctors') {
+                const fileInput = document.getElementById('docImgInput');
+                if (fileInput && fileInput.files.length > 0) {
+                    const uploadData = new FormData();
+                    uploadData.append('file', fileInput.files[0]);
+                    
+                    const uploadRes = await fetchAPI('/pictures/upload', 'POST', uploadData);
+                    if (uploadRes && uploadRes.id) {
+                        document.getElementById('hiddenPicId').value = uploadRes.id;
+                    }
+                }
+            }
+
+            // 2. Thu thập dữ liệu form
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            // Convert types
+            ['identityNumber', 'departmentId', 'headDoctorId', 'doctorId', 'patientIdentityNumber', 'experienceYear', 'pictureId', 'rating']
+            .forEach(key => { if (data[key]) data[key] = parseInt(data[key]); });
+
+            // ID Logic
+            if (IS_EDIT) {
+                if (CURRENT_TAB !== 'patients') data.id = parseInt(EDIT_ID);
+            }
+
+            // Endpoint & Method
+            let method = IS_EDIT ? 'PUT' : 'POST';
+            let endpoint = '';
+            
+            if (CURRENT_TAB === 'patients') endpoint = IS_EDIT ? `/patients/${EDIT_ID}` : '/patients';
+            else if (CURRENT_TAB === 'doctors') endpoint = IS_EDIT ? `/doctors/${EDIT_ID}` : '/doctors';
+            else if (CURRENT_TAB === 'departments') endpoint = IS_EDIT ? `/departments/${EDIT_ID}` : '/departments';
+            else if (CURRENT_TAB === 'appointments') endpoint = IS_EDIT ? `/appointments/${EDIT_ID}` : '/appointments';
+            else if (CURRENT_TAB === 'news') endpoint = IS_EDIT ? `/medical-news/${EDIT_ID}` : '/medical-news';
+
+            const res = await fetchAPI(endpoint, method, data);
+            if (res) {
+                showToast(IS_EDIT ? 'Cập nhật thành công!' : 'Thêm mới thành công!', 'success');
+                closeModal('formModal');
+                loadData(CURRENT_TAB);
+                if (CURRENT_TAB === 'departments') preloadCache(); 
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Bạn có chắc chắn muốn xóa mục này không?')) return;
+
+            let endpoint = '';
+            if (CURRENT_TAB === 'patients') endpoint = `/patients/${id}`;
+            else if (CURRENT_TAB === 'doctors') endpoint = `/doctors/${id}`;
+            else if (CURRENT_TAB === 'departments') endpoint = `/departments/${id}`;
+            else if (CURRENT_TAB === 'appointments') endpoint = `/appointments/${id}`;
+            else if (CURRENT_TAB === 'news') endpoint = `/medical-news/${id}`;
+
+            await fetchAPI(endpoint, 'DELETE');
+            showToast('Đã xóa thành công', 'success');
+            loadData(CURRENT_TAB);
+        }
+
+        // --- 7. USER MENU & PASSWORD ---
+        function toggleUserDropdown() { document.getElementById('userDropdown').classList.toggle('show'); }
+        window.onclick = function(e) { if (!e.target.closest('.user-info')) document.getElementById('userDropdown').classList.remove('show'); }
+
+        function openPasswordModal() {
+            document.getElementById('newPass').value = '';
+            document.getElementById('passwordModal').classList.add('active');
+        }
+
+        async function changePassword() {
+            const pass = document.getElementById('newPass').value;
+            if (!pass) return alert('Vui lòng nhập mật khẩu');
+            if (!currentUserId) return alert('Lỗi xác thực user');
+            
+            // PUT /api/accounts?id={id} body string
+            const res = await fetch(API_BASE + `/accounts?id=${currentUserId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: pass // API nhận string raw body theo api-docs
+            });
+
+            if (res.ok) {
+                showToast('Đổi mật khẩu thành công', 'success');
+                closeModal('passwordModal');
+            } else {
+                showToast('Lỗi đổi mật khẩu', 'error');
+            }
+        }
+
+        function showToast(msg, type) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.className = `toast ${type} show`;
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
 </body>
 </html>

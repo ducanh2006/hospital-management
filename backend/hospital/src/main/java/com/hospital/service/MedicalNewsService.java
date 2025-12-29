@@ -1,5 +1,6 @@
 package com.hospital.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -26,13 +27,19 @@ public class MedicalNewsService {
     }
 
     public MedicalNewsEntity save(MedicalNewsEntity news) {
+        news.setLastUpdate(LocalDateTime.now());
         return repo.save(news);
     }
 
-    public MedicalNewsEntity update(MedicalNewsEntity news) {
-        if (!repo.existsById(news.getId())) {
+    public MedicalNewsEntity update(Integer id, MedicalNewsEntity news) {
+        if (news == null){
+            throw new IllegalArgumentException("News must not be null");
+        }
+        if (!repo.existsById(id)) {
             throw new EntityNotFoundException("News not found with id=" + news.getId());
         }
+        news.setId(id);
+        news.setLastUpdate(LocalDateTime.now());
         return repo.save(news);
     }
 

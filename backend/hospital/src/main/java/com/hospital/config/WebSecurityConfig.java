@@ -3,6 +3,7 @@ package com.hospital.config;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
@@ -36,18 +37,22 @@ public class WebSecurityConfig {
 
 
     @Bean
+    // Việc một request có cần xác thực hay không hoàn toàn phụ thuộc vào matcher đầu tiên mà nó khớp trong danh sách authorizeHttpRequests.
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable())
 
             // 🔥 BẬT CORS BÊN TRONG SPRING SECURITY (nếu không → vẫn lỗi!)
             .cors(cors -> {})  
-
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-
             .authorizeHttpRequests(auth -> auth
+                // .anyRequest().permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers( "/v3/api-docs/**").permitAll() 
+                .requestMatchers("/uploads/**").permitAll()
+                .requestMatchers(HttpMethod.DELETE).authenticated()
+                .requestMatchers(HttpMethod.PUT).authenticated()
                 .anyRequest().permitAll()
-                // .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll() 
                 // .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()   
                 // .requestMatchers(HttpMethod.GET, "/api/**").permitAll()  
                 // .requestMatchers(HttpMethod.GET,"/uploads/**").permitAll()          
