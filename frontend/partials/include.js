@@ -76,10 +76,6 @@ document.addEventListener("DOMContentLoaded", () => {
       if (file.includes("footer.html")) {
         wireNavLinks();
       }
-
-      if (file.includes("chat.html") && typeof initChatWidget === "function") {
-        initChatWidget();
-      }
     } catch (err) {
       console.error("Không tải được", file, err);
     }
