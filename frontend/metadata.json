@@ -1,0 +1,7 @@
+{
+  "name": "Sunshine Hospital Management System",
+  "description": "A comprehensive React-based hospital management system converted from legacy code, featuring patient booking, doctor management, test result lookups, and medical news.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

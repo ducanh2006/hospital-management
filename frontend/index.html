@@ -1,94 +1,47 @@
+
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Trang chủ - Bệnh viện Ánh Dương</title>
-  <link rel="stylesheet" href="css/style-index.css" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bệnh viện Ánh Dương - Sunshine Hospital</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #0093E9;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #007bbd;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.13.0",
+    "axios": "https://esm.sh/axios@^1.13.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
 </head>
-<body>
-  <div data-include="partials/header.html"></div>
-  
-  <main class="container home-page">
-    <!-- HERO -->
-    <section class="hero">
-      <div class="slider">
-        <div class="slides" id="heroSlides">
-          <div class="slide s1">
-            Đặt lịch khám nhanh - gọi 0363.636.363
-          </div>
-          <div class="slide s2">
-            Chăm sóc tận tâm với đội ngũ bác sĩ chuyên khoa
-          </div>
-          <div class="slide s3">
-            Kết quả xét nghiệm online an toàn &amp; bảo mật
-          </div>
-        </div>
-
-        <div class="dots" id="heroDots">
-          <button class="dot active" data-index="0"></button>
-          <button class="dot" data-index="1"></button>
-          <button class="dot" data-index="2"></button>
-        </div>
-      </div>
-    </section>
-
-    <!-- QUICK ACTIONS -->
-    <section class="quick-actions">
-      <div class="actions">
-        <a href="#" class="action" data-nav="dat-lich-kham.html">
-          <h4>Đặt lịch khám</h4>
-          <p>Đăng ký theo chuyên khoa, chọn bác sĩ</p>
-        </a>
-        <a href="#" class="action" data-nav="ket-qua-xet-nghiem.html">
-          <h4>Kết quả xét nghiệm</h4>
-          <p>Tra cứu trực tuyến an toàn</p>
-        </a>
-        <a href="#" class="action" data-nav="tin-tuc.html">
-          <h4>Tin tức</h4>
-          <p>Thông tin được cập nhật liên tục</p>
-        </a>
-        <a href="#" class="action" data-nav="doi-ngu-bac-si.html">
-          <h4>Bác sĩ</h4>
-          <p>Đến với đội ngũ bác sĩ của chúng tôi</p>
-        </a>
-      </div>
-    </section>
-
-    <!-- INTRO -->
-    <section class="intro">
-      <div class="intro-box">
-        <h3>Giới thiệu</h3>
-        <p>Bệnh viện Ánh Dương là bệnh viện đa khoa với nhiệm vụ chăm sóc sức khỏe toàn diện cho cộng đồng. Bệnh viện được xây dựng theo mô hình hiện đại, kết hợp giữa khám chữa bệnh, đào tạo, nghiên cứu và hợp tác quốc tế.</p>
-        <p>Với hệ thống cơ sở vật chất đồng bộ và đội ngũ chuyên gia đầu ngành, bệnh viện tiếp nhận hàng nghìn lượt khám chữa bệnh mỗi ngày, đáp ứng nhu cầu ngày càng cao của người dân.</p>
-      </div>
-      <div class="intro-box">
-        <h3>Trao gửi yêu thương - lan tỏa Ánh Dương</h3>
-        <p>
-          Với khát khao sẻ chia và những tấm lòng của các bệnh nhân, Bệnh viện Ánh Dương luôn nỗ lực hết mình và sức mạnh "Lan tỏa Ánh Dương".
-        </p>
-      </div>
-    </section>
-
-    <!-- MAP -->
-    <section class="map-section">
-      <div class="map-wrapper">
-        <div class="map-title">Bản đồ bệnh viện</div>
-        <div class="map-embed">
-          <iframe
-            src="https://www.google.com/maps?q=B1%20B%C3%A1ch%20Khoa%2C%20Hai%20B%C3%A0%20Tr%C6%B0ng%2C%20H%C3%A0%20N%E1%BB%99i&output=embed"
-            allowfullscreen=""
-            loading="lazy"
-            referrerpolicy="no-referrer-when-downgrade"
-          ></iframe>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div data-include="partials/footer.html"></div>
-
-  <script src="js/app-index.js"></script>
-  <script src="partials/include.js"></script>
+  <body class="bg-gray-50 text-gray-900">
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
 </body>
 </html>
