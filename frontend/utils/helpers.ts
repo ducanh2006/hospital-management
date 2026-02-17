@@ -2,12 +2,24 @@
 import { UPLOAD_BASE_URL, API_BASE_URL } from '../constants/config';
 import { Gender } from '../types';
 
-export const getImageUrl = (filename: string | null | undefined, gender?: Gender) => {
+export const getImageUrl = (filename: string | null | undefined, gender?: Gender, size?: number) => {
+  let url = "";
+
+  // 1. Xác định URL cơ bản
   if (!filename) {
-    if (gender === Gender.FEMALE) return `${UPLOAD_BASE_URL}/doctor-female-1.png`;
-    return `${UPLOAD_BASE_URL}/doctor-male-1.png`;
+    url = gender === Gender.FEMALE
+      ? `${UPLOAD_BASE_URL}/doctor-female-1.png`
+      : `${UPLOAD_BASE_URL}/doctor-male-1.png`;
+  } else {
+    url = `${UPLOAD_BASE_URL}/${filename}`;
   }
-  return `${UPLOAD_BASE_URL}/${filename}`;
+
+  // 2. Thêm tham số size nếu có truyền vào
+  if (size) {
+    url += `?size=${size}`;
+  }
+
+  return url;
 };
 
 export const formatDateTime = (dateString: string) => {

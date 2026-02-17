@@ -16,67 +16,67 @@ import com.hospital.entity.DoctorEntity;
 public interface DoctorRepository extends JpaRepository<DoctorEntity, Integer> {
 
     @Query("""
-                SELECT new com.hospital.dto.DoctorDTO(
-                    d.id,
-                    d.fullName,
-                    d.gender,
-                    d.specialization,
-                    d.dateOfBirth,
-                    d.departmentId,
-                    d.email,
-                    d.phone,
-                    d.bio,
-                    d.experienceYear,
-                    d.pictureId,
-                    d.lastUpdate,
-                    AVG(a.rating),
-                    COUNT(a.id)
-                )
-                FROM DoctorEntity d
-                LEFT JOIN AppointmentEntity a
-                    ON a.doctorId = d.id
-                    AND a.status = com.hospital.dto.AppointmentStatus.COMPLETED
-                GROUP BY d.id, d.fullName, d.gender, d.specialization,
-                        d.dateOfBirth, d.departmentId,
-                        d.email, d.phone, d.bio,
-                        d.experienceYear, d.pictureId, d.lastUpdate
-            """)
+        SELECT new com.hospital.dto.DoctorDTO(
+            d.id,
+            d.fullName,
+            d.gender,
+            d.specialization,
+            d.dateOfBirth,
+            d.departmentId,
+            d.email,
+            d.phone,
+            d.bio,
+            d.experienceYear,
+            p.pictureUrl, 
+            d.lastUpdate,
+            AVG(a.rating),
+            COUNT(a.id)
+        )
+        FROM DoctorEntity d
+        LEFT JOIN PictureEntity p ON d.pictureId = p.id
+        LEFT JOIN AppointmentEntity a 
+            ON a.doctorId = d.id 
+            AND a.status = com.hospital.dto.AppointmentStatus.COMPLETED
+        GROUP BY d.id, d.fullName, d.gender, d.specialization, 
+                d.dateOfBirth, d.departmentId, d.email, d.phone, 
+                d.bio, d.experienceYear, p.pictureUrl, d.lastUpdate
+        """)
     List<DoctorDTO> findAllDoctorsWithRating();
 
     @Query("""
-                SELECT new com.hospital.dto.DoctorDTO(
-                    d.id,
-                    d.fullName,
-                    d.gender,
-                    d.specialization,
-                    d.dateOfBirth,
-                    d.departmentId,
-                    d.email,
-                    d.phone,
-                    d.bio,
-                    d.experienceYear,
-                    d.pictureId,
-                    d.lastUpdate,
-                    AVG(a.rating),
-                    COUNT(a.id)
-                )
-                FROM DoctorEntity d
-                LEFT JOIN AppointmentEntity a
-                    ON a.doctorId = d.id
-                    AND a.status = com.hospital.dto.AppointmentStatus.COMPLETED
-                WHERE d.id = :doctorId
-                GROUP BY d.id, d.fullName, d.gender, d.specialization,
-                        d.dateOfBirth, d.departmentId,
-                        d.email, d.phone, d.bio,
-                        d.experienceYear, d.pictureId, d.lastUpdate
-            """)
+            SELECT new com.hospital.dto.DoctorDTO(
+                d.id,
+                d.fullName,
+                d.gender,
+                d.specialization,
+                d.dateOfBirth,
+                d.departmentId,
+                d.email,
+                d.phone,
+                d.bio,
+                d.experienceYear,
+                p.pictureUrl, 
+                d.lastUpdate,
+                AVG(a.rating),
+                COUNT(a.id)
+            )
+            FROM DoctorEntity d
+            LEFT JOIN PictureEntity p ON d.pictureId = p.id
+            LEFT JOIN AppointmentEntity a 
+                ON a.doctorId = d.id 
+                AND a.status = com.hospital.dto.AppointmentStatus.COMPLETED
+            WHERE d.id = :doctorId
+            GROUP BY d.id, d.fullName, d.gender, d.specialization, 
+                    d.dateOfBirth, d.departmentId, d.email, d.phone, 
+                    d.bio, d.experienceYear, p.pictureUrl, d.lastUpdate
+        """)
     Optional<DoctorDTO> findByIdDoctorsWithRating(@Param("doctorId") Integer doctorId);
 
     @Query("""
-                SELECT a
-                FROM AppointmentEntity a
-                WHERE a.status <> com.hospital.dto.AppointmentStatus.COMPLETED
-                AND a.doctorId = :doctorId
-            """)
+            SELECT a
+            FROM AppointmentEntity a
+            WHERE a.status <> com.hospital.dto.AppointmentStatus.COMPLETED
+            AND a.doctorId = :doctorId
+        """)
     List<AppointmentEntity> findNonCompletedAppointmentsByDoctor(@Param("doctorId") Integer doctorId);
 }

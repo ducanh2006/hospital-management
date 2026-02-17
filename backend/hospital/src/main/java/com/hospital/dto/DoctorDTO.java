@@ -21,7 +21,7 @@ public class DoctorDTO {
     private String phone;
     private String bio;
     private Integer experienceYear;
-    private Integer pictureId;
+    private String pictureUrl;
     private LocalDateTime lastUpdate;
     private Double avgRating;
     private Long totalReviews;
