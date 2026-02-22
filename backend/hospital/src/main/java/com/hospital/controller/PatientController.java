@@ -65,7 +65,7 @@ public class PatientController {
     // 5. Cập nhật thông tin bệnh nhân
     @PutMapping("/{identityNumber}")
     public ResponseEntity<PatientEntity> update(@PathVariable Long identityNumber, @RequestBody PatientEntity p) {
-        return ResponseEntity.ok(service.update(identityNumber,p));
+        return ResponseEntity.ok(service.update(identityNumber, p));
     }
 
     // 6. Xóa hồ sơ bệnh nhân

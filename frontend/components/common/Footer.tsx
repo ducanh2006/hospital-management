@@ -7,7 +7,7 @@ const Footer: React.FC = () => {
   return (
     <>
       <div className="bg-[#0093E9] text-white py-3 text-center text-lg font-bold">
-        Tổng đài: 0363 636 3636
+        Tổng đài: 0123.456.789
       </div>
       <footer className="bg-[#13284f] text-gray-300 pt-12 pb-8">
         <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-12">
@@ -17,7 +17,7 @@ const Footer: React.FC = () => {
             <div className="space-y-2 text-sm">
               <p>Địa chỉ: Số 01 Đại Cồ Việt, Hai Bà Trưng, Hà Nội</p>
               <p>Email: contact@sunshinehospital.vn</p>
-              <p>Điện thoại: 0363 636 3636</p>
+              <p>Điện thoại: 0123.456.789</p>
             </div>
             <p className="mt-4 text-xs text-gray-500">© 2025 Bệnh viện Ánh Dương. All rights reserved.</p>
           </div>
@@ -42,9 +42,9 @@ const Footer: React.FC = () => {
 
           <div>
             <h4 className="text-white font-bold mb-6">Kết nối</h4>
-            <a 
-              href="https://facebook.com" 
-              target="_blank" 
+            <a
+              href="https://www.facebook.com/profile.php?id=61584536879830"
+              target="_blank"
               className="inline-flex items-center gap-2 bg-blue-600/20 text-blue-400 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition-all"
             >
               <i className="fab fa-facebook"></i> Facebook

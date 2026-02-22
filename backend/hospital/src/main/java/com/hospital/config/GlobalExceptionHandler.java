@@ -1,13 +1,14 @@
 package com.hospital.config;
+
 import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import io.jsonwebtoken.JwtException;
 import jakarta.persistence.EntityNotFoundException;
 
 @RestControllerAdvice
@@ -20,9 +21,9 @@ public class GlobalExceptionHandler {
                 .body(buildError(HttpStatus.BAD_REQUEST, ex.getMessage()));
     }
 
-    // 401 - token sai/không hợp lệ (nếu JwtUtils còn ném JwtException)
-    @ExceptionHandler(JwtException.class)
-    public ResponseEntity<?> handleJwt(JwtException ex) {
+    // 401 - token sai/không hợp lệ (ném bởi OAuth2 Resource Server)
+    @ExceptionHandler(InvalidBearerTokenException.class)
+    public ResponseEntity<?> handleJwt(InvalidBearerTokenException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                 .body(buildError(HttpStatus.UNAUTHORIZED, "Invalid or expired token"));
     }
@@ -46,7 +47,6 @@ public class GlobalExceptionHandler {
                 "timestamp", LocalDateTime.now().toString(),
                 "status", status.value(),
                 "error", status.getReasonPhrase(),
-                "message", message
-        );
+                "message", message);
     }
 }

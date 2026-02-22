@@ -11,9 +11,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hospital.dto.DoctorDTO;
+import com.hospital.dto.DoctorSearchRequest;
+import com.hospital.dto.PageResponse;
 import com.hospital.entity.AppointmentEntity;
 import com.hospital.entity.DoctorEntity;
 import com.hospital.service.DoctorService;
@@ -34,7 +37,8 @@ public class DoctorController {
         return service.findAll();
     }
 
-    // 2. Lấy danh sách bác sĩ đầy đủ thông tin (Rating trung bình và tổng số review)
+    // 2. Lấy danh sách bác sĩ đầy đủ thông tin (Rating trung bình và tổng số
+    // review)
     @GetMapping("/with-rating")
     public List<DoctorDTO> listWithRating() {
         return service.findAllDoctorsWithRating();
@@ -43,13 +47,36 @@ public class DoctorController {
     // 3. Lấy chi tiết một bác sĩ theo ID
     @GetMapping("/{id}")
     public ResponseEntity<DoctorDTO> get(@PathVariable Integer id) {
-        return service.findById(id) // Sử dụng findById(id) có kiểm tra null
+        return service.findById(id)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
-    // 4. Lấy danh sách các lịch hẹn chưa hoàn thành của bác sĩ ( chưa hoàn thành
-    // nghĩa là status khác COMPLETED)
+    /**
+     * 4. Tìm kiếm bác sĩ nâng cao với phân trang (Deferred Join)
+     *
+     * GET /api/doctors/search?name=nguyen&gender=MALE&departmentId=2&page=0&size=10
+     *
+     * Tất cả tham số đều optional. Nếu không truyền thì không lọc theo tiêu chí đó.
+     */
+    @GetMapping("/search")
+    public ResponseEntity<PageResponse<DoctorDTO>> search(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String gender,
+            @RequestParam(required = false) Integer departmentId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        DoctorSearchRequest req = new DoctorSearchRequest();
+        req.setName(name);
+        req.setGender(gender);
+        req.setDepartmentId(departmentId);
+        req.setPage(page);
+        req.setSize(size);
+
+        return ResponseEntity.ok(service.searchDoctors(req));
+    }
+
     @GetMapping("/non-completed-appointments/{id}")
     public ResponseEntity<List<AppointmentEntity>> getNonCompletedAppointments(@PathVariable Integer id) {
         List<AppointmentEntity> appointments = service.findNonCompletedAppointments(id);

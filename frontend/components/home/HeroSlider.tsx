@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 
 const slides = [
   {
-    text: "Đặt lịch khám nhanh - gọi 0363.636.363",
+    text: "Đặt lịch khám nhanh - gọi 0123.456.789",
     image: "https://images.unsplash.com/photo-1586773860418-d37222d8fce3?auto=format&fit=crop&w=1600&q=80"
   },
   {
@@ -28,16 +28,16 @@ const HeroSlider: React.FC = () => {
 
   return (
     <section className="relative h-[320px] md:h-[450px] overflow-hidden rounded-2xl my-6">
-      <div 
+      <div
         className="flex transition-transform duration-700 ease-in-out h-full"
         style={{ transform: `translateX(-${current * 100}%)` }}
       >
         {slides.map((slide, index) => (
-          <div 
+          <div
             key={index}
             className="min-w-full h-full relative flex items-center justify-center text-center px-6"
-            style={{ 
-              background: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${slide.image}) center/cover` 
+            style={{
+              background: `linear-gradient(rgba(0,0,0,0.4), rgba(0,0,0,0.4)), url(${slide.image}) center/cover`
             }}
           >
             <h2 className="text-white text-3xl md:text-5xl font-extrabold max-w-4xl drop-shadow-lg">
@@ -52,9 +52,8 @@ const HeroSlider: React.FC = () => {
           <button
             key={index}
             onClick={() => setCurrent(index)}
-            className={`w-3 h-3 rounded-full border-2 border-white transition-all ${
-              current === index ? 'bg-white scale-125' : 'bg-white/40'
-            }`}
+            className={`w-3 h-3 rounded-full border-2 border-white transition-all ${current === index ? 'bg-white scale-125' : 'bg-white/40'
+              }`}
           />
         ))}
       </div>

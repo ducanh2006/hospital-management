@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Silent SSO</title>
+</head>
+<body>
+  <!--
+    File này được Keycloak dùng để kiểm tra trạng thái đăng nhập (silent-check-sso)
+    mà không cần redirect toàn trang. Không chỉnh sửa file này.
+  -->
+  <script>
+    parent.postMessage(location.href, location.origin);
+  </script>
+</body>
+</html>

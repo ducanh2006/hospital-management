@@ -25,12 +25,13 @@ export interface Doctor {
   departmentId: number;
   departmentName?: string;
   gender: Gender;
+  dateOfBirth?: string;
   experienceYear: number;
   phone: string;
   email: string;
   bio: string;
+  pictureUrl?: string;   // URL ảnh từ backend DoctorDTO
   pictureId?: number;
-  photoUrl?: string;
   avgRating?: number;
   totalReviews?: number;
   lastUpdate: string;
@@ -76,4 +77,13 @@ export interface MedicalNews {
   title: string;
   content: string;
   lastUpdate: string;
+}
+
+/** Khớp với PageResponse<T> của backend */
+export interface PageResponse<T> {
+  content: T[];
+  page: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }

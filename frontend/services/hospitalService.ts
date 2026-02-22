@@ -1,6 +1,5 @@
-
 import api from './api';
-import { Doctor, Department, MedicalNews, Patient, Appointment } from '../types';
+import { Doctor, Department, MedicalNews, Patient, Appointment, PageResponse } from '../types';
 
 export const doctorService = {
   getAll: () => api.get<Doctor[]>('/doctors'),
@@ -9,6 +8,28 @@ export const doctorService = {
   create: (data: Partial<Doctor>) => api.post('/doctors', data),
   update: (id: number, data: Partial<Doctor>) => api.put(`/doctors/${id}`, data),
   delete: (id: number) => api.delete(`/doctors/${id}`),
+
+  /**
+   * Tìm kiếm bác sĩ nâng cao — gọi GET /api/doctors/search
+   * Phân trang do backend xử lý (Deferred Join), trả về PageResponse<Doctor>.
+   */
+  search: (params: {
+    name?: string;
+    gender?: string;
+    departmentId?: number | string;
+    page?: number;
+    size?: number;
+  }) => api.get<PageResponse<Doctor>>('/doctors/search', { params }),
+};
+
+export const accountService = {
+  /**
+   * Đồng bộ tài khoản với backend sau khi đăng nhập Keycloak.
+   * Chỉ cần gửi Authorization: Bearer <token> trong header.
+   * Header này được tự động đính kèm bởi api interceptor (api.ts).
+   * Backend sẽ đọc JWT từ header, tự parse sub/email/roles và upsert vào DB.
+   */
+  syncLogin: () => api.post('/accounts/login'),
 };
 
 export const departmentService = {

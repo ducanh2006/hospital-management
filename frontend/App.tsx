@@ -1,8 +1,8 @@
 
 import React from 'react';
-import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import MainLayout from './components/common/MainLayout';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { APP_ROUTES } from './constants/config';
 
 // Pages
@@ -16,10 +16,7 @@ import TestResults from './pages/TestResults';
 import Login from './pages/Login';
 import Admin from './pages/Admin';
 
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <>{children}</> : <Navigate to={APP_ROUTES.LOGIN} />;
-};
+
 
 const AppRoutes: React.FC = () => {
   return (
@@ -32,25 +29,19 @@ const AppRoutes: React.FC = () => {
       <Route path={APP_ROUTES.NEWS} element={<MainLayout><News /></MainLayout>} />
       <Route path={APP_ROUTES.RESULTS} element={<MainLayout><TestResults /></MainLayout>} />
       <Route path={APP_ROUTES.LOGIN} element={<MainLayout><Login /></MainLayout>} />
-      <Route 
-        path={APP_ROUTES.ADMIN} 
-        element={
-          <ProtectedRoute>
-            <Admin />
-          </ProtectedRoute>
-        } 
-      />
+      <Route path={APP_ROUTES.ADMIN} element={<MainLayout><Admin /></MainLayout>} />
+      <Route path="*" element={<Navigate to={APP_ROUTES.HOME} replace />} />
     </Routes>
   );
 };
 
 const App: React.FC = () => {
   return (
-    <HashRouter>
+    <BrowserRouter>
       <AuthProvider>
         <AppRoutes />
       </AuthProvider>
-    </HashRouter>
+    </BrowserRouter>
   );
 };
 

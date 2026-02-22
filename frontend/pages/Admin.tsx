@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { 
-  doctorService, 
-  patientService, 
-  departmentService, 
-  appointmentService, 
+import {
+  doctorService,
+  patientService,
+  departmentService,
+  appointmentService,
   newsService,
   pictureService
 } from '../services/hospitalService';
@@ -17,11 +17,11 @@ import { getImageUrl, formatDateTime } from '../utils/helpers';
 type Tab = 'patients' | 'doctors' | 'departments' | 'appointments' | 'news';
 
 const Admin: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, hasRole, login } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>('patients');
   const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   // Lookups
   const [depts, setDepts] = useState<Department[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
@@ -36,7 +36,7 @@ const Admin: React.FC = () => {
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [newPassword, setNewPassword] = useState("");
 
-  const tabs: {id: Tab, label: string}[] = [
+  const tabs: { id: Tab, label: string }[] = [
     { id: 'patients', label: 'Bệnh nhân' },
     { id: 'doctors', label: 'Bác sĩ' },
     { id: 'departments', label: 'Khoa' },
@@ -50,7 +50,7 @@ const Admin: React.FC = () => {
       let res;
       switch (tab) {
         case 'patients': res = await patientService.getAll(); break;
-        case 'doctors': res = await doctorService.getAll(); break;
+        case 'doctors': res = await doctorService.getAllWithRating(); break;
         case 'departments': res = await departmentService.getAll(); break;
         case 'appointments': res = await appointmentService.getAll(); break;
         case 'news': res = await newsService.getAll(); break;
@@ -64,11 +64,13 @@ const Admin: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchData(activeTab);
-  }, [activeTab]);
+    if (isAuthenticated && (hasRole('admin') || hasRole('doctor'))) {
+      fetchData(activeTab);
+    }
+  }, [activeTab, isAuthenticated]);
 
   useEffect(() => {
-    // Cache lookups
+    if (!isAuthenticated || (!hasRole('admin') && !hasRole('doctor'))) return;
     const loadLookups = async () => {
       const [dRes, drRes] = await Promise.all([
         departmentService.getAll(),
@@ -78,7 +80,7 @@ const Admin: React.FC = () => {
       setDoctors(drRes.data);
     };
     loadLookups();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleDelete = async (id: any) => {
     if (!confirm("Bạn có chắc chắn muốn xóa?")) return;
@@ -116,7 +118,7 @@ const Admin: React.FC = () => {
       }
 
       switch (activeTab) {
-        case 'patients': 
+        case 'patients':
           if (isEdit) await patientService.update(dataToSave.identityNumber, dataToSave);
           else await patientService.create(dataToSave);
           break;
@@ -156,43 +158,97 @@ const Admin: React.FC = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <header className="bg-white px-8 py-4 flex justify-between items-center shadow-sm sticky top-0 z-40">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-green-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
-            <i className="fas fa-plus"></i>
-          </div>
-          <div>
-            <h1 className="text-xl font-black">Sunshine Admin</h1>
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-widest">Hospital Management</p>
-          </div>
-        </div>
-        <div className="flex items-center gap-6">
-          <button 
-            onClick={() => setIsPasswordModalOpen(true)}
-            className="flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-[#0093E9] transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-[#0093E9]">
-              {user?.username.charAt(0).toUpperCase()}
-            </div>
-            {user?.username}
-          </button>
-          <button onClick={logout} className="px-4 py-2 text-sm font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors">Đăng xuất</button>
-        </div>
-      </header>
+  // ── 1. Đang kiểm tra xác thực ─────────────────────────────────────────────
+  if (authLoading) {
+    return (
+      <div style={{
+        minHeight: '60vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 16, color: '#64748b',
+      }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: '50%',
+          border: '4px solid #e2e8f0', borderTop: '4px solid #0093E9',
+          animation: 'spin 0.8s linear infinite',
+        }} />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <p style={{ margin: 0, fontSize: 14 }}>Đang kiểm tra xác thực...</p>
+      </div>
+    );
+  }
 
-      <nav className="bg-gradient-to-r from-purple-700 to-blue-600 px-8 flex overflow-x-auto no-scrollbar">
+  // ── 2. Chưa đăng nhập ─────────────────────────────────────────────────────
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        minHeight: '60vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 16,
+        textAlign: 'center', padding: 32,
+      }}>
+        <div style={{ fontSize: 72 }}>🔒</div>
+        <h2 style={{ color: '#0f172a', fontWeight: 800, fontSize: 26, margin: 0 }}>
+          Yêu cầu đăng nhập
+        </h2>
+        <p style={{ color: '#64748b', margin: 0, maxWidth: 400, lineHeight: 1.6 }}>
+          Bạn cần đăng nhập với tài khoản <strong>Admin</strong> hoặc <strong>Bác sĩ</strong> để truy cập trang quản lý.
+        </p>
+        <button
+          onClick={login}
+          style={{
+            marginTop: 8, padding: '12px 32px', borderRadius: 12,
+            background: 'linear-gradient(135deg, #0093E9, #80D0C7)',
+            color: 'white', border: 'none', fontWeight: 700,
+            cursor: 'pointer', fontSize: 15, boxShadow: '0 4px 15px rgba(0,147,233,0.3)',
+          }}
+        >
+          Đăng nhập ngay
+        </button>
+      </div>
+    );
+  }
+
+  // ── 3. Đã đăng nhập nhưng không đủ quyền ─────────────────────────────────
+  if (!hasRole('admin') && !hasRole('doctor')) {
+    return (
+      <div style={{
+        minHeight: '60vh', display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center', gap: 16,
+        textAlign: 'center', padding: 32,
+      }}>
+        <div style={{ fontSize: 72 }}>🚫</div>
+        <h2 style={{ color: '#dc2626', fontWeight: 800, fontSize: 26, margin: 0 }}>
+          Không có quyền truy cập
+        </h2>
+        <p style={{ color: '#64748b', margin: 0, maxWidth: 420, lineHeight: 1.6 }}>
+          Trang quản lý chỉ dành cho tài khoản <strong>Admin</strong> hoặc <strong>Bác sĩ</strong>.<br />
+          Tài khoản <strong>{user?.username}</strong> không có quyền này.
+        </p>
+      </div>
+    );
+  }
+
+  // ── 4. Có quyền → hiển thị giao diện quản lý ─────────────────────────────
+  return (
+    <div>
+      {/* Admin Sub-Nav */}
+      <nav style={{
+        background: 'linear-gradient(135deg, #6b21a8, #2563eb)',
+        padding: '0 32px', display: 'flex', alignItems: 'center',
+        overflowX: 'auto',
+      }}>
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`px-6 py-4 font-bold text-sm tracking-widest uppercase transition-all relative ${
-              activeTab === tab.id ? 'text-white bg-white/10' : 'text-white/60 hover:text-white'
-            }`}
+            style={{
+              padding: '14px 20px', fontWeight: 700, fontSize: 13,
+              letterSpacing: '0.08em', textTransform: 'uppercase',
+              background: 'none', border: 'none',
+              borderBottom: activeTab === tab.id ? '3px solid white' : '3px solid transparent',
+              cursor: 'pointer', whiteSpace: 'nowrap', transition: 'all 0.2s',
+              color: activeTab === tab.id ? 'white' : 'rgba(255,255,255,0.55)',
+            }}
           >
             {tab.label}
-            {activeTab === tab.id && <div className="absolute bottom-0 left-0 right-0 h-1 bg-white"></div>}
           </button>
         ))}
       </nav>
@@ -224,6 +280,7 @@ const Admin: React.FC = () => {
                       <th className="px-6 py-4">Địa chỉ</th>
                     </>}
                     {activeTab === 'doctors' && <>
+                      <th className="px-4 py-4">Ảnh</th>
                       <th className="px-6 py-4">ID</th>
                       <th className="px-6 py-4">Họ tên</th>
                       <th className="px-6 py-4">Chuyên môn</th>
@@ -262,7 +319,15 @@ const Admin: React.FC = () => {
                         <td className="px-6 py-4 text-gray-500">{item.address}</td>
                       </>}
                       {activeTab === 'doctors' && <>
-                        <td className="px-6 py-4 font-bold">{item.id}</td>
+                        <td className="px-4 py-3">
+                          <img
+                            src={getImageUrl(item.pictureUrl, item.gender, null)}
+                            alt={item.fullName}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-blue-100 shadow-sm"
+                            onError={(e) => { (e.target as HTMLImageElement).src = getImageUrl(null, item.gender); }}
+                          />
+                        </td>
+                        <td className="px-6 py-4 font-bold text-gray-500">{item.id}</td>
                         <td className="px-6 py-4 font-semibold text-blue-600">{item.fullName}</td>
                         <td className="px-6 py-4">{item.specialization}</td>
                         <td className="px-6 py-4">{item.phone}</td>
@@ -280,11 +345,10 @@ const Admin: React.FC = () => {
                         <td className="px-6 py-4 font-semibold text-blue-600">BS. {doctors.find(d => d.id === item.doctorId)?.fullName}</td>
                         <td className="px-6 py-4 text-gray-500 font-medium">{formatDateTime(item.time)}</td>
                         <td className="px-6 py-4">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${
-                            item.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase ${item.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
                             item.status === 'PENDING' ? 'bg-amber-100 text-amber-700' :
-                            item.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
-                          }`}>
+                              item.status === 'CONFIRMED' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700'
+                            }`}>
                             {item.status}
                           </span>
                         </td>
@@ -319,15 +383,15 @@ const Admin: React.FC = () => {
               {activeTab === 'patients' && <>
                 <div className="space-y-1 md:col-span-2">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Số CCCD</label>
-                  <input type="number" readOnly={isEdit} value={formData.identityNumber || ''} onChange={e => setFormData({...formData, identityNumber: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                  <input type="number" readOnly={isEdit} value={formData.identityNumber || ''} onChange={e => setFormData({ ...formData, identityNumber: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Họ tên</label>
-                  <input type="text" value={formData.fullName || ''} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                  <input type="text" value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Giới tính</label>
-                  <select value={formData.gender || ''} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl">
+                  <select value={formData.gender || ''} onChange={e => setFormData({ ...formData, gender: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl">
                     <option value="MALE">Nam</option>
                     <option value="FEMALE">Nữ</option>
                     <option value="OTHER">Khác</option>
@@ -335,36 +399,36 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">SĐT</label>
-                  <input type="text" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Địa chỉ</label>
-                  <input type="text" value={formData.address || ''} onChange={e => setFormData({...formData, address: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <input type="text" value={formData.address || ''} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
               </>}
               {activeTab === 'doctors' && <>
                 <div className="space-y-1 md:col-span-2">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Họ tên</label>
-                  <input type="text" value={formData.fullName || ''} onChange={e => setFormData({...formData, fullName: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                  <input type="text" value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Chuyên môn</label>
-                  <input type="text" value={formData.specialization || ''} onChange={e => setFormData({...formData, specialization: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <input type="text" value={formData.specialization || ''} onChange={e => setFormData({ ...formData, specialization: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Khoa</label>
-                  <select value={formData.departmentId || ''} onChange={e => setFormData({...formData, departmentId: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl">
+                  <select value={formData.departmentId || ''} onChange={e => setFormData({ ...formData, departmentId: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl">
                     <option value="">Chọn khoa</option>
                     {depts.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">SĐT</label>
-                  <input type="text" value={formData.phone || ''} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Kinh nghiệm (Năm)</label>
-                  <input type="number" value={formData.experienceYear || ''} onChange={e => setFormData({...formData, experienceYear: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <input type="number" value={formData.experienceYear || ''} onChange={e => setFormData({ ...formData, experienceYear: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
                 <div className="md:col-span-2 space-y-2">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Ảnh đại diện</label>
@@ -372,28 +436,28 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Giới thiệu</label>
-                  <textarea value={formData.bio || ''} onChange={e => setFormData({...formData, bio: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" rows={3}></textarea>
+                  <textarea value={formData.bio || ''} onChange={e => setFormData({ ...formData, bio: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" rows={3}></textarea>
                 </div>
               </>}
               {activeTab === 'appointments' && <>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">CCCD Bệnh nhân</label>
-                  <input type="number" value={formData.patientIdentityNumber || ''} onChange={e => setFormData({...formData, patientIdentityNumber: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                  <input type="number" value={formData.patientIdentityNumber || ''} onChange={e => setFormData({ ...formData, patientIdentityNumber: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Bác sĩ</label>
-                  <select value={formData.doctorId || ''} onChange={e => setFormData({...formData, doctorId: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl">
+                  <select value={formData.doctorId || ''} onChange={e => setFormData({ ...formData, doctorId: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl">
                     <option value="">Chọn bác sĩ</option>
                     {doctors.map(d => <option key={d.id} value={d.id}>{d.fullName}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Thời gian</label>
-                  <input type="datetime-local" value={formData.time || ''} onChange={e => setFormData({...formData, time: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <input type="datetime-local" value={formData.time || ''} onChange={e => setFormData({ ...formData, time: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Trạng thái</label>
-                  <select value={formData.status || ''} onChange={e => setFormData({...formData, status: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl">
+                  <select value={formData.status || ''} onChange={e => setFormData({ ...formData, status: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl">
                     <option value="PENDING">Chờ khám</option>
                     <option value="CONFIRMED">Đã xác nhận</option>
                     <option value="COMPLETED">Hoàn thành</option>
@@ -402,17 +466,17 @@ const Admin: React.FC = () => {
                 </div>
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Kết quả xét nghiệm</label>
-                  <textarea value={formData.testResults || ''} onChange={e => setFormData({...formData, testResults: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" rows={4}></textarea>
+                  <textarea value={formData.testResults || ''} onChange={e => setFormData({ ...formData, testResults: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" rows={4}></textarea>
                 </div>
               </>}
               {activeTab === 'news' && <>
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Tiêu đề</label>
-                  <input type="text" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                  <input type="text" value={formData.title || ''} onChange={e => setFormData({ ...formData, title: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
                 </div>
                 <div className="md:col-span-2 space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Nội dung</label>
-                  <textarea value={formData.content || ''} onChange={e => setFormData({...formData, content: e.target.value})} className="w-full p-3 bg-gray-50 border rounded-xl" rows={8} required></textarea>
+                  <textarea value={formData.content || ''} onChange={e => setFormData({ ...formData, content: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" rows={8} required></textarea>
                 </div>
               </>}
 
@@ -433,11 +497,11 @@ const Admin: React.FC = () => {
             <div className="space-y-4">
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-gray-400 uppercase">Mật khẩu mới</label>
-                <input 
-                  type="password" 
+                <input
+                  type="password"
                   value={newPassword}
                   onChange={e => setNewPassword(e.target.value)}
-                  className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-4 focus:ring-blue-50" 
+                  className="w-full p-3 bg-gray-50 border rounded-xl outline-none focus:ring-4 focus:ring-blue-50"
                   placeholder="********"
                 />
               </div>

@@ -1,19 +1,17 @@
-
 import api from './api';
 
-export const login = async (credentials: any) => {
-  const response = await api.post('/auth/login', credentials);
-  return response.data;
-};
-
-export const register = async (userData: any) => {
+/**
+ * Đăng ký tài khoản mới (dùng trong Admin panel).
+ * Lưu ý: Login không còn qua API nữa — login được xử lý bởi Keycloak.
+ */
+export const register = async (userData: { username: string; password: string }) => {
   const response = await api.post('/accounts', userData);
   return response.data;
 };
 
-export const updatePassword = async (userId: string, newPassword: string) => {
+export const updatePassword = async (userId: string | number, newPassword: string) => {
   const response = await api.put(`/accounts?id=${userId}`, newPassword, {
-    headers: { 'Content-Type': 'text/plain' }
+    headers: { 'Content-Type': 'text/plain' },
   });
   return response.data;
 };
