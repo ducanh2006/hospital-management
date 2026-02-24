@@ -35,8 +35,10 @@ public class PictureController {
         return ResponseEntity.ok(service.findById(id));
     }
 
-    // Lấy theo URL (Dùng @RequestParam như bạn đã viết ở tham số hàm)
-    // Ví dụ: /api/pictures/find-by-url?url=ten-anh.png
+    /*
+    Lấy theo URL (Dùng @RequestParam như bạn đã viết ở tham số hàm)
+    Ví dụ: /api/pictures/find-by-url?url=ten-anh.png
+     */
     @GetMapping("/find-by-url")
     public ResponseEntity<PictureEntity> findByUrl(@RequestParam String url) {
         return ResponseEntity.ok(service.findByUrl(url));

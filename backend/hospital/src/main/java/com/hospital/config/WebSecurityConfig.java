@@ -62,6 +62,7 @@ public class WebSecurityConfig {
     // ─────────────────────────────────────────────────────────────────────
     // Security Filter Chain
     // ─────────────────────────────────────────────────────────────────────
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -86,11 +87,11 @@ public class WebSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/accounts/login").authenticated()
 
                         // Quản lý account (còn lại) — chỉ admin
-                        .requestMatchers("/api/accounts/**").hasRole("admin")
+                        // .requestMatchers("/api/accounts/**").hasRole("admin")
 
                         // Quản lý bác sĩ (thêm/sửa/xóa)
-                        .requestMatchers(HttpMethod.POST, "/api/doctors/**").hasRole("admin")
-                        .requestMatchers(HttpMethod.PUT, "/api/doctors/**").hasRole("admin")
+                        .requestMatchers(HttpMethod.POST, "/api/doctors/**").hasAnyRole("doctor", "admin")
+                        .requestMatchers(HttpMethod.PUT, "/api/doctors/**").hasAnyRole("doctor", "admin")
                         .requestMatchers(HttpMethod.DELETE, "/api/doctors/**").hasRole("admin")
 
                         // Quản lý khoa (thêm/sửa/xóa)

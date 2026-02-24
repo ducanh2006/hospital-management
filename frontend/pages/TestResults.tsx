@@ -1,42 +1,39 @@
 
-import React, { useState } from 'react';
-import { patientService } from '../services/hospitalService';
-import { Appointment, AppointmentStatus } from '../types';
+import React, { useEffect, useState } from 'react';
+import { accountService } from '../services/hospitalService';
+import { AppointmentHistoryDTO, AppointmentStatus } from '../types';
 import { formatDateTime } from '../utils/helpers';
-import CustomButton from '../components/ui/CustomButton';
+import { useAuth } from '../context/AuthContext';
 
 const TestResults: React.FC = () => {
-  const [cccd, setCccd] = useState("");
-  const [results, setResults] = useState<Appointment[]>([]);
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const [results, setResults] = useState<AppointmentHistoryDTO[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const handleLookup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (cccd.length !== 12) {
-      setError("Vui lòng nhập đúng 12 số CCCD.");
-      return;
-    }
+  useEffect(() => {
+    if (!isAuthenticated || authLoading) return;
+    fetchMyAppointments();
+  }, [isAuthenticated, authLoading]);
 
-    setError("");
+  const fetchMyAppointments = async () => {
     setIsLoading(true);
+    setError("");
     setResults([]);
-
     try {
-      const res = await patientService.getAppointments(cccd);
-      const data = res.data;
+      const res = await accountService.getMyAppointments();
+      const data = res.data ?? [];
       if (data.length === 0) {
-        setError("Bệnh nhân chưa có lịch sử khám bệnh nào.");
+        setError("Bạn chưa có lịch sử khám bệnh nào.");
       } else {
-        // Sort by newest
         data.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
         setResults(data);
       }
     } catch (err: any) {
       if (err.response?.status === 404) {
-        setError("Không tìm thấy hồ sơ bệnh nhân với số CCCD này.");
+        setError("Bạn chưa có hồ sơ bệnh nhân. Vui lòng đặt lịch khám để tạo hồ sơ.");
       } else {
-        setError("Lỗi kết nối máy chủ.");
+        setError("Lỗi kết nối máy chủ. Vui lòng thử lại.");
       }
     } finally {
       setIsLoading(false);
@@ -60,63 +57,70 @@ const TestResults: React.FC = () => {
       <header className="text-center mb-12">
         <p className="text-[#0093E9] font-bold uppercase tracking-widest text-sm mb-2">Tra cứu</p>
         <h1 className="text-4xl font-extrabold mb-4">Kết quả xét nghiệm</h1>
-        <p className="text-gray-500">Nhập số CCCD (12 số) để xem lịch sử và kết quả khám.</p>
+        <p className="text-gray-500">
+          {isAuthenticated
+            ? "Lịch sử và kết quả khám bệnh của bạn được hiển thị bên dưới."
+            : "Vui lòng đăng nhập để xem kết quả khám bệnh của bạn."}
+        </p>
       </header>
 
-      <section className="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 mb-12">
-        <form onSubmit={handleLookup} className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 space-y-2">
-            <label className="text-sm font-bold text-gray-700">Số CCCD</label>
-            <input 
-              type="text" 
-              maxLength={12}
-              value={cccd}
-              onChange={(e) => setCccd(e.target.value.replace(/\D/g, ''))}
-              placeholder="12 chữ số"
-              className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-blue-50"
-            />
-            {error && <p className="text-red-500 text-sm font-medium">{error}</p>}
-          </div>
-          <CustomButton type="submit" disabled={isLoading} className="md:mt-7 h-[58px]">
-            {isLoading ? <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div> : 'Xem kết quả'}
-          </CustomButton>
-        </form>
-      </section>
-
-      {results.length > 0 && (
-        <div className="space-y-12 animate-fade-in-up">
-          {upcomingList.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold text-amber-600 mb-6 flex items-center gap-2">
-                <i className="far fa-calendar-alt"></i> Lịch hẹn sắp tới / Chờ khám
-              </h2>
-              <div className="space-y-4">
-                {upcomingList.map(item => (
-                  <ResultCard key={item.id} appt={item} statusInfo={getStatusInfo(item.status)} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {completedList.length > 0 && (
-            <div>
-              <h2 className="text-xl font-bold text-green-600 mb-6 flex items-center gap-2">
-                <i className="fas fa-clipboard-check"></i> Kết quả khám & Xét nghiệm
-              </h2>
-              <div className="space-y-4">
-                {completedList.map(item => (
-                  <ResultCard key={item.id} appt={item} statusInfo={getStatusInfo(item.status)} />
-                ))}
-              </div>
-            </div>
-          )}
+      {!isAuthenticated && !authLoading && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center">
+          <p className="text-amber-700 font-semibold">⚠️ Bạn chưa đăng nhập.</p>
+          <p className="text-gray-500 mt-2 text-sm">Hãy đăng nhập để xem lịch sử khám bệnh của mình.</p>
         </div>
+      )}
+
+      {isAuthenticated && (
+        <>
+          {isLoading && (
+            <div className="flex justify-center py-16">
+              <div className="w-10 h-10 border-4 border-blue-200 border-t-blue-500 rounded-full animate-spin" />
+            </div>
+          )}
+
+          {!isLoading && error && (
+            <div className="bg-gray-50 border border-gray-200 rounded-3xl p-12 text-center">
+              <p className="text-gray-400 italic">{error}</p>
+            </div>
+          )}
+
+          {!isLoading && results.length > 0 && (
+            <div className="space-y-12 animate-fade-in-up">
+              {upcomingList.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-amber-600 mb-6 flex items-center gap-2">
+                    <i className="far fa-calendar-alt"></i> Lịch hẹn sắp tới / Chờ khám
+                  </h2>
+                  <div className="space-y-4">
+                    {upcomingList.map(item => (
+                      <ResultCard key={item.id} appt={item} statusInfo={getStatusInfo(item.status)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {completedList.length > 0 && (
+                <div>
+                  <h2 className="text-xl font-bold text-green-600 mb-6 flex items-center gap-2">
+                    <i className="fas fa-clipboard-check"></i> Kết quả khám &amp; Xét nghiệm
+                  </h2>
+                  <div className="space-y-4">
+                    {completedList.map(item => (
+                      <ResultCard key={item.id} appt={item} statusInfo={getStatusInfo(item.status)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 };
 
-const ResultCard: React.FC<{ appt: Appointment; statusInfo: any }> = ({ appt, statusInfo }) => (
+const ResultCard: React.FC<{ appt: AppointmentHistoryDTO; statusInfo: any }> = ({ appt, statusInfo }) => (
   <div className={`bg-white p-6 rounded-2xl shadow-sm border-2 border-gray-100 border-l-[6px] ${statusInfo.border} transition-all hover:shadow-md`}>
     <div className="flex justify-between items-start mb-4">
       <div>
@@ -130,7 +134,7 @@ const ResultCard: React.FC<{ appt: Appointment; statusInfo: any }> = ({ appt, st
         {statusInfo.text}
       </span>
     </div>
-    
+
     {appt.notes && (
       <div className="text-sm text-gray-600 mb-4 italic">
         <strong>Ghi chú:</strong> {appt.notes}

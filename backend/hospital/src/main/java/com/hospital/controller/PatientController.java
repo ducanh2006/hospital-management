@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.hospital.dto.AppointmentHistoryDTO;
+import com.hospital.dto.PatientDTO;
 import com.hospital.entity.PatientEntity;
 import com.hospital.service.PatientService;
 
@@ -28,28 +31,51 @@ public class PatientController {
 
     private final PatientService service;
 
-    // 1. Lấy danh sách tất cả bệnh nhân
+    // 1. Lấy danh sách tất cả bệnh nhân (trả về PatientDTO với thông tin từ
+    // profile)
     @GetMapping
-    public List<PatientEntity> list() {
+    public List<PatientDTO> list() {
         return service.findAll();
     }
 
-    // 2. Lấy thông tin chi tiết một bệnh nhân theo số định danh (identityNumber)
-    @GetMapping("/{identityNumber}")
-    public ResponseEntity<PatientEntity> get(@PathVariable Long identityNumber) {
+    /**
+     * GET /api/patients/me
+     * Lấy bản ghi patient của người dùng hiện tại.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<PatientEntity> getMyPatient(@AuthenticationPrincipal Jwt jwt) {
+        return service.findMyPatient(jwt.getSubject())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * PUT /api/patients (hoặc /api/patients/me, nhưng theo yêu cầu là
+     * /api/patients)
+     * Cập nhật bản ghi patient của người dùng hiện tại.
+     */
+    @PutMapping
+    public ResponseEntity<PatientEntity> updateMyPatient(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody PatientEntity updates) {
+        return ResponseEntity.ok(service.updateMyPatient(jwt.getSubject(), updates));
+    }
+
+    // 2. Lấy thông tin chi tiết một bệnh nhân theo patient.id (INT)
+    @GetMapping("/{id}")
+    public ResponseEntity<PatientEntity> get(@PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(service.findById(identityNumber));
+            return ResponseEntity.ok(service.findById(id));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // 3. Lấy lịch sử các cuộc hẹn/khám bệnh của bệnh nhân
-    // Vận dụng hàm getAppointmentHistory đã viết trong Service
-    @GetMapping("/appointments/{identityNumber}")
-    public ResponseEntity<List<AppointmentHistoryDTO>> getHistory(@PathVariable Long identityNumber) {
+    // 3. Lịch sử khám bệnh của bệnh nhân theo patient.id
+    @GetMapping("/appointments/{id}")
+    public ResponseEntity<List<AppointmentHistoryDTO>> getHistory(@PathVariable Integer id) {
         try {
-            List<AppointmentHistoryDTO> history = service.getAppointmentHistory(identityNumber);
+            List<AppointmentHistoryDTO> history = service.getAppointmentHistory(id);
             return ResponseEntity.ok(history);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
@@ -62,16 +88,16 @@ public class PatientController {
         return service.save(p);
     }
 
-    // 5. Cập nhật thông tin bệnh nhân
-    @PutMapping("/{identityNumber}")
-    public ResponseEntity<PatientEntity> update(@PathVariable Long identityNumber, @RequestBody PatientEntity p) {
-        return ResponseEntity.ok(service.update(identityNumber, p));
+    // 5. Cập nhật thông tin bệnh nhân (theo patient.id)
+    @PutMapping("/{id}")
+    public ResponseEntity<PatientEntity> update(@PathVariable Integer id, @RequestBody PatientEntity p) {
+        return ResponseEntity.ok(service.update(id, p));
     }
 
-    // 6. Xóa hồ sơ bệnh nhân
-    @DeleteMapping("/{identityNumber}")
-    public ResponseEntity<Map<String, String>> delete(@PathVariable Long identityNumber) {
-        service.deleteById(identityNumber);
+    // 6. Xóa hồ sơ bệnh nhân (theo patient.id)
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
+        service.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 }

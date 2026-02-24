@@ -26,13 +26,15 @@ CREATE TABLE `account` (
   `id` int NOT NULL AUTO_INCREMENT,
   `keycloak_user_id` varchar(36) NOT NULL,
   `username` varchar(100) NOT NULL,
+  `email` varchar(150) DEFAULT NULL,
   `role_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `keycloak_user_id` (`keycloak_user_id`),
-  KEY `idx_keycloak_user_id` (`keycloak_user_id`),
-  KEY `idx_role_id` (`role_id`),
-  CONSTRAINT `account_ibfk_1` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  UNIQUE KEY `username` (`username`),
+  UNIQUE KEY `uk_keycloak_user_id` (`keycloak_user_id`),
+  KEY `fk_account_role` (`role_id`),
+  CONSTRAINT `fk_account_role` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE SET NULL
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -41,7 +43,7 @@ CREATE TABLE `account` (
 
 LOCK TABLES `account` WRITE;
 /*!40000 ALTER TABLE `account` DISABLE KEYS */;
-INSERT INTO `account` VALUES (1,'9ce9d928-8f8b-4fb9-b932-053d6ed9ed9a','duongducanh06@gmail.com',1),(2,'fe1c2929-8e3c-472e-9674-6898382dd99e','duongducanhcnnttcspbkhn@gmail.com',1),(3,'c46a9ab0-d1eb-4e60-aa90-81ac62d79644','nguyentadung02@gmail.com',1),(4,'9a84d48f-475a-405a-9189-855d75081e90','patient',1),(5,'b20bfce6-f58c-4add-8cee-2c5a4eed4550','doctor',2),(6,'09106d39-e953-4f85-80f8-846abbd1132b','admin',3);
+INSERT INTO `account` VALUES (1,'9ce9d928-8f8b-4fb9-b932-053d6ed9ed9a','duongducanh06','duongducanh06@gmail.com',1),(2,'fe1c2929-8e3c-472e-9674-6898382dd99e','duongducanhcnnttcspbkhn@gmail.com','duongducanhcnnttcspbkhn@gmail.com',1),(3,'c46a9ab0-d1eb-4e60-aa90-81ac62d79644','tadung','nguyentadung02@gmail.com',1),(4,'b20bfce6-f58c-4add-8cee-2c5a4eed4550','doctor','adfadsf@gmail.com',2),(5,'09106d39-e953-4f85-80f8-846abbd1132b','admin','admin@gmail.com',3),(6,'f17e734f-1e52-440a-b678-3790eac67356','top1chuyentinsupham@gmail.com','top1chuyentinsupham@gmail.com',1),(7,'9a84d48f-475a-405a-9189-855d75081e90','patient','adfasdf@hotmail.com',1);
 /*!40000 ALTER TABLE `account` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -54,8 +56,8 @@ DROP TABLE IF EXISTS `appointment`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `appointment` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `doctor_id` int DEFAULT NULL,
-  `patient_identity_number` bigint NOT NULL,
+  `doctor_id` int NOT NULL,
+  `patient_id` int NOT NULL,
   `department_id` int DEFAULT NULL,
   `rating` int DEFAULT NULL,
   `time` datetime DEFAULT NULL,
@@ -65,13 +67,14 @@ CREATE TABLE `appointment` (
   `test_results` text,
   PRIMARY KEY (`id`),
   KEY `fk_appt_doctor` (`doctor_id`),
-  KEY `fk_appt_patient` (`patient_identity_number`),
+  KEY `fk_appt_patient` (`patient_id`),
   KEY `fk_appt_department` (`department_id`),
   CONSTRAINT `fk_appt_department` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_appt_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_appt_doctor` FOREIGN KEY (`doctor_id`) REFERENCES `doctor` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `fk_appt_patient` FOREIGN KEY (`patient_id`) REFERENCES `patient` (`id`) ON DELETE RESTRICT,
   CONSTRAINT `chk_rating_only_completed` CHECK (((`rating` is null) or (`status` = _utf8mb4'COMPLETED'))),
   CONSTRAINT `chk_rating_point` CHECK (((`rating` is null) or (`rating` between 1 and 5)))
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -80,7 +83,7 @@ CREATE TABLE `appointment` (
 
 LOCK TABLES `appointment` WRITE;
 /*!40000 ALTER TABLE `appointment` DISABLE KEYS */;
-INSERT INTO `appointment` VALUES (1,1,123456789001,3,5,'2025-11-10 08:00:00','COMPLETED','Khám tốt, bác sĩ tận tình','2025-12-27 08:36:04','{\"blood_pressure\": \"120/80\", \"cholesterol\": \"Normal\", \"notes\": \"Healthy patient\"}'),(2,NULL,123456789002,4,4,'2025-11-10 09:00:00','COMPLETED','Phẫu thuật thành công','2025-12-27 08:36:04','{\"surgery_report\": \"Appendectomy successful\", \"recovery_status\": \"Stable\"}'),(3,NULL,123456789003,5,3,'2025-11-10 10:00:00','COMPLETED','Điều trị tạm được','2025-12-27 08:36:04','{\"symptoms\": \"Reduced fever\", \"medication\": \"Paracetamol prescribed\"}'),(4,4,123456789004,4,2,'2025-11-10 11:00:00','COMPLETED','Cần theo dõi thêm','2025-12-27 08:36:04','{\"blood_test\": \"Slightly elevated glucose\", \"follow_up\": \"Recommended in 1 week\"}'),(5,5,123456789005,3,1,'2025-11-11 08:30:00','COMPLETED','Nghỉ việc đi','2025-12-27 08:36:04','{\"diagnosis\": \"Severe stress\", \"recommendation\": \"Medical leave 7 days\"}'),(6,6,123456789001,2,5,'2025-11-11 09:30:00','COMPLETED','Xử lý ca cấp cứu tốt','2025-12-27 08:36:04','{\"emergency_notes\": \"Stabilized after trauma\", \"vitals\": \"BP 130/85, HR 78\"}'),(7,7,123456789002,NULL,4,'2025-11-11 10:30:00','COMPLETED','Giải thích rõ ràng','2025-12-27 08:36:04','{\"consultation_summary\": \"Allergies confirmed\", \"treatment_plan\": \"Antihistamine\"}'),(8,8,123456789003,2,5,'2025-11-11 11:30:00','COMPLETED','Chẩn đoán chính xác','2025-12-27 08:36:04','{\"x_ray\": \"Pneumonia detected\", \"antibiotics\": \"Prescribed for 7 days\"}'),(9,9,123456789004,2,4,'2025-11-12 08:00:00','COMPLETED','Phẫu thuật thành công','2025-12-27 08:36:04','{\"surgery_type\": \"Knee arthroscopy\", \"outcome\": \"Successful\"}'),(10,10,123456789005,NULL,5,'2025-11-12 09:00:00','COMPLETED','Điều trị hiệu quả','2025-12-27 08:36:04','{\"therapy_response\": \"Excellent\", \"next_visit\": \"2025-12-10\"}'),(11,1,123456789002,3,4,'2025-11-12 10:00:00','COMPLETED','Khám kỹ lưỡng','2025-12-27 08:36:04','{\"ecg\": \"Normal sinus rhythm\", \"cholesterol\": \"Borderline high\"}'),(12,NULL,123456789003,4,5,'2025-11-12 11:00:00','COMPLETED','Rất hài lòng','2025-12-27 08:36:04','{\"all_tests\": \"Within normal range\", \"patient_feedback\": \"Very satisfied\"}'),(13,NULL,123456789004,5,3,'2025-11-13 08:30:00','COMPLETED','Cần cải thiện thời gian chờ','2025-12-27 08:36:04','{\"urinalysis\": \"UTI detected\", \"antibiotics\": \"Prescribed\"}'),(14,4,123456789005,4,1,'2025-11-13 09:30:00','COMPLETED','Chuyên môn yếu kém','2025-12-27 08:36:04','{\"diagnosis_delayed\": true, \"recommendation\": \"Second opinion advised\"}'),(15,5,123456789001,3,5,'2025-11-13 10:30:00','COMPLETED','Rất chuyên nghiệp','2025-12-27 08:36:04','{\"mri\": \"No abnormalities\", \"conclusion\": \"Healthy\"}'),(16,6,123456789002,2,NULL,'2025-11-14 08:00:00','PENDING','Chờ xác nhận','2025-12-27 08:36:04',NULL),(17,7,123456789003,NULL,NULL,'2025-11-14 09:00:00','CONFIRMED','Đã xác nhận lịch','2025-12-27 08:36:04',NULL),(18,8,123456789004,2,NULL,'2025-11-14 10:00:00','CONFIRMED','Chuẩn bị khám','2025-12-27 08:36:04',NULL),(19,9,123456789005,2,NULL,'2025-11-14 11:00:00','CANCELLED','Bệnh nhân huỷ lịch','2025-12-27 08:36:04',NULL),(20,10,123456789001,NULL,NULL,'2025-11-15 08:30:00','PENDING','Đặt lịch lần đầu','2025-12-27 08:36:04',NULL),(21,1,123456789123,3,NULL,'2026-02-20 17:03:00','PENDING','Em sắp chết rồi','2026-02-12 17:04:27','Ngon rồi em ơi');
+INSERT INTO `appointment` VALUES (1,1,1,1,5,'2025-11-10 08:00:00','COMPLETED','Khám tốt','2026-02-22 21:33:32','{\"blood_pressure\": \"120/80\"}'),(2,1,2,1,NULL,'2025-11-14 08:00:00','CONFIRMED','Chờ xác nhận','2026-02-24 00:05:57',NULL),(3,2,4,4,NULL,'2025-11-15 09:00:00','CONFIRMED','Bác sĩ A đi khám','2026-02-22 21:33:32',NULL),(4,3,8,4,NULL,'2026-02-24 08:55:00','COMPLETED','Em sắp xết','2026-02-24 09:19:34','Ngon rồi e ơi'),(5,3,8,4,NULL,'2026-02-24 01:18:00','COMPLETED','Em sắp chớt','2026-02-24 09:19:22','Xong rồi em nhé');
 /*!40000 ALTER TABLE `appointment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -97,10 +100,9 @@ CREATE TABLE `department` (
   `head_doctor_id` int DEFAULT NULL,
   `phone` varchar(30) DEFAULT NULL,
   `description` text,
-  `last_update` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
-  KEY `fk_dept_head_doctor` (`head_doctor_id`),
-  CONSTRAINT `fk_dept_head_doctor` FOREIGN KEY (`head_doctor_id`) REFERENCES `doctor` (`id`) ON DELETE SET NULL
+  KEY `fk_department_head_doctor` (`head_doctor_id`),
+  CONSTRAINT `fk_department_head_doctor` FOREIGN KEY (`head_doctor_id`) REFERENCES `doctor` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -110,7 +112,7 @@ CREATE TABLE `department` (
 
 LOCK TABLES `department` WRITE;
 /*!40000 ALTER TABLE `department` DISABLE KEYS */;
-INSERT INTO `department` VALUES (2,'Khoa Ngoại',NULL,'0987654321','Phẫu thuật và chăm sóc hậu phẫu','2025-11-02 08:11:17'),(3,'Khoa Nhi',NULL,'0905123456','Khám và điều trị cho trẻ em','2025-11-02 08:11:17'),(4,'Khoa Tim mạch',NULL,'0912345678','Chẩn đoán và điều trị bệnh tim','2025-11-02 08:11:17'),(5,'Khoa Da liễu',NULL,'0933221100','Chăm sóc và điều trị các bệnh về da','2025-11-02 08:11:17');
+INSERT INTO `department` VALUES (1,'Khoa Nội',NULL,'0123456789','Chuyên điều trị các bệnh nội tổng quát'),(2,'Khoa Ngoại',NULL,'0987654321','Phẫu thuật và chăm sóc hậu phẫu'),(3,'Khoa Nhi',NULL,'0905123456','Khám và điều trị cho trẻ em'),(4,'Khoa Tim mạch',NULL,'0912345678','Chẩn đoán và điều trị bệnh tim'),(5,'Khoa Da liễu',NULL,'0933221100','Chăm sóc và điều trị các bệnh về da');
 /*!40000 ALTER TABLE `department` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -123,23 +125,21 @@ DROP TABLE IF EXISTS `doctor`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `doctor` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `full_name` varchar(50) NOT NULL,
-  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `specialization` varchar(50) NOT NULL,
-  `date_of_birth` date DEFAULT NULL,
+  `profile_id` int NOT NULL,
+  `specialization` varchar(50) DEFAULT NULL,
   `department_id` int DEFAULT NULL,
-  `email` varchar(200) DEFAULT NULL,
-  `phone` varchar(30) DEFAULT NULL,
   `bio` text,
   `experience_year` int DEFAULT NULL,
   `picture_id` int DEFAULT NULL,
-  `last_update` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
+  UNIQUE KEY `profile_id` (`profile_id`),
+  UNIQUE KEY `uk_doctor_profile_id` (`profile_id`),
   KEY `fk_doctor_department` (`department_id`),
   KEY `fk_doctor_picture` (`picture_id`),
   CONSTRAINT `fk_doctor_department` FOREIGN KEY (`department_id`) REFERENCES `department` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `fk_doctor_picture` FOREIGN KEY (`picture_id`) REFERENCES `picture` (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_doctor_picture` FOREIGN KEY (`picture_id`) REFERENCES `picture` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_doctor_profile` FOREIGN KEY (`profile_id`) REFERENCES `profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -148,7 +148,7 @@ CREATE TABLE `doctor` (
 
 LOCK TABLES `doctor` WRITE;
 /*!40000 ALTER TABLE `doctor` DISABLE KEYS */;
-INSERT INTO `doctor` VALUES (1,'Lê Thị F','FEMALE','Ngoại nhi',NULL,3,'f.le@hospital.com','0902000006','Thạc sĩ chuyên khoa Ngoại nhi',12,24,'2026-02-12 17:28:02'),(4,'Vũ Văn I','MALE','Nội tim mạch','1979-07-12',4,'i.vu@hospital.com','0902000009','BSCKI Nội tim mạch',22,8,'2025-12-27 08:36:04'),(5,'Đặng Thị K','FEMALE','Nhi tổng quát','1992-03-25',3,'k.dang@hospital.com','0902000010','Bác sĩ trẻ năng động, yêu trẻ em',5,2,'2025-12-27 08:36:04'),(6,'Bùi Văn L','MALE','Hồi sức cấp cứu','1984-09-05',2,'l.bui@hospital.com','0902000011','Kinh nghiệm xử lý ca khó',14,9,'2025-12-27 08:36:04'),(7,'Trần Văn M','MALE','Nội tiết','1981-12-15',NULL,'m.tran@hospital.com','0902000012','Chuyên gia về bệnh tiểu đường',16,10,'2025-12-27 08:36:04'),(8,'Phạm Thị N','FEMALE','Chẩn đoán hình ảnh','1987-06-18',2,'n.pham@hospital.com','0902000013','Bác sĩ chẩn đoán hình ảnh',11,3,'2025-12-27 08:36:04'),(9,'Lý Văn O','MALE','Ngoại thần kinh','1976-02-28',2,'o.ly@hospital.com','0902000014','Bàn tay vàng trong phẫu thuật',25,11,'2025-12-27 08:36:04'),(10,'Đỗ Thị P','FEMALE','Nội tiêu hóa','1993-10-10',NULL,'p.do@hospital.com','0902000015','Chuyên khoa nội soi tiêu hóa',4,4,'2025-12-27 08:36:04');
+INSERT INTO `doctor` VALUES (3,4,'Chưa cập nhật',4,'KHông có',11,NULL);
 /*!40000 ALTER TABLE `doctor` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -165,7 +165,7 @@ CREATE TABLE `medical_news` (
   `content` text NOT NULL,
   `last_update` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -174,7 +174,7 @@ CREATE TABLE `medical_news` (
 
 LOCK TABLES `medical_news` WRITE;
 /*!40000 ALTER TABLE `medical_news` DISABLE KEYS */;
-INSERT INTO `medical_news` VALUES (1,'Bộ Y tế xây dựng gói dịch vụ y tế cơ bản thuộc phạm vi miễn viện phí','Chủ trương tiến tới miễn viện phí nằm trong yêu cầu khách quan, thể hiện bản chất tốt đẹp của chính sách xã hội Việt Nam. Bộ Y tế đang xây dựng gói dịch vụ y tế cơ bản để bảo đảm quyền được chăm sóc sức khỏe của người dân.\n\nGói cơ bản dự kiến gồm các dịch vụ thiết yếu, giúp giảm gánh nặng chi phí cho người bệnh, tăng tiếp cận và nâng cao chất lượng chăm sóc.\n\nĐịnh hướng là ưu tiên các can thiệp dự phòng, khám chữa bệnh ban đầu, tiêm chủng, chăm sóc bà mẹ và trẻ em, quản lý bệnh mạn tính phổ biến… để mọi người dân được thụ hưởng bình đẳng.\n\nCác địa phương sẽ được hướng dẫn tính toán chi phí, cấu phần dịch vụ, cơ chế thanh toán và lộ trình triển khai phù hợp với điều kiện nguồn lực, bảo đảm tính bền vững của quỹ.\n\nMở rộng bao phủ dịch vụ y tế cơ bản đến mọi nhóm dân cư.\nGiảm chi tiêu tiền túi, hạn chế nghèo hóa do chi phí y tế.\nChuẩn hóa gói dịch vụ và cơ chế chi trả để đảm bảo chất lượng.','2025-12-01 00:00:00'),(2,'WHO khuyến nghị Việt Nam mạnh tay với thuốc lá điện tử','Đại diện WHO tại Việt Nam đề xuất cần một chiến dịch ra quân quyết liệt để kiểm soát thuốc lá điện tử, tương tự quy định cấm nồng độ cồn khi lái xe.\n\nViệc siết chặt quản lý nhằm bảo vệ sức khỏe cộng đồng, nhất là giới trẻ, trước nguy cơ nghiện nicotine và tác hại lâu dài.\n\nWHO khuyến nghị hoàn thiện khung pháp lý, tăng kiểm tra thị trường, quản lý quảng cáo và buôn lậu, đồng thời đẩy mạnh truyền thông nguy cơ tới học sinh, sinh viên.\n\nCác chuyên gia cũng nhấn mạnh cần hỗ trợ cai nghiện, tư vấn tâm lý, và tích hợp giám sát vào hệ thống phòng chống tác hại thuốc lá hiện có.\n\nTăng thuế và chế tài với sản phẩm thuốc lá điện tử.\nCấm quảng cáo, khuyến mại nhắm tới thanh thiếu niên.\nXây dựng điểm tư vấn, hỗ trợ cai nghiện nicotine.','2025-12-01 00:00:00'),(3,'Hiện thực hóa hành động kiểm soát sốt xuất huyết','Hội nghị khoa học toàn quốc về sốt xuất huyết Dengue 2025 nhấn mạnh các hành động toàn diện trong kiểm soát dịch, từ giám sát, truyền thông, đến phối hợp liên ngành.\n\nCác đại biểu chia sẻ kinh nghiệm và giải pháp để giảm ca mắc, hạn chế tử vong và chuẩn bị nguồn lực ứng phó bền vững.\n\nTrong mùa cao điểm, ngành y tế khuyến cáo người dân loại bỏ ổ bọ gậy, ngủ màn, dùng thuốc xua muỗi, đồng thời sớm đến cơ sở y tế khi có dấu hiệu cảnh báo.\n\nCác địa phương tăng cường phun diệt muỗi trọng điểm, cập nhật phác đồ điều trị, dự trữ dịch truyền và nhân lực hồi sức cho ca nặng.\n\nGiám sát chủ động ca bệnh và ổ dịch tại cộng đồng.\nTruyền thông thay đổi hành vi phòng bệnh sốt xuất huyết.\nBảo đảm vật tư, dịch truyền, nhân lực hồi sức trong cao điểm.','2024-01-03 00:00:00'),(4,'Siết chất lượng đào tạo ngành y, chuẩn hóa thực hành','Chuyên gia cho rằng để bảo đảm an toàn người bệnh, đào tạo bác sĩ cần chuẩn hóa theo mô hình nội trú và siết điều kiện mở ngành y, đồng thời tăng cường thực hành chuẩn.\n\nĐề xuất này nhằm nâng cao chất lượng nhân lực y tế, đáp ứng yêu cầu ngày càng cao của hệ thống chăm sóc sức khỏe.\n\nViệc chuẩn hóa bao gồm chuẩn đầu ra, thời lượng thực hành lâm sàng, giám sát chất lượng và cấp chứng chỉ hành nghề sau khi hoàn thành thực tập bắt buộc.\n\nCác trường cần liên kết bệnh viện để tăng thời gian tại buồng bệnh, cập nhật tiến bộ y khoa, đạo đức nghề nghiệp và kỹ năng giao tiếp với người bệnh.\n\nChuẩn đầu ra thống nhất, sát thực tiễn.\nThực hành lâm sàng đủ thời lượng, có giám sát.\nĐánh giá độc lập trước cấp chứng chỉ hành nghề.','2023-06-07 00:00:00'),(5,'Diễn tập ứng phó bảo đảm an toàn bức xạ trong y tế','Bệnh viện K tổ chức diễn tập kịch bản sự cố bức xạ, đánh giá năng lực ứng phó và bảo vệ an toàn cho nhân viên, bệnh nhân trong tình huống khẩn cấp.\n\nHoạt động giúp củng cố quy trình, nâng cao kỹ năng và phối hợp liên ngành trong quản lý rủi ro bức xạ.\n\nCác đội phản ứng được luyện tập quy trình báo động đỏ, khoanh vùng, đánh giá nhiễm xạ, khử nhiễm, vận chuyển an toàn và chăm sóc người nghi phơi nhiễm.\n\nKết quả diễn tập là cơ sở để cập nhật kế hoạch ứng phó khẩn cấp, bổ sung trang thiết bị bảo hộ, thiết bị đo và đào tạo định kỳ.\n\nChuẩn hóa quy trình báo động, khoanh vùng và khử nhiễm.\nĐào tạo liên tục cho đội phản ứng nhanh và nhân viên liên quan.\nBổ sung phương tiện đo xạ, bảo hộ, vận chuyển an toàn.','2020-11-17 00:00:00'),(6,'Ngày Thế giới phòng, chống AIDS: cảnh báo trẻ hóa và lây nhiễm âm thầm','Nhiều địa phương ghi nhận chuyển biến tích cực trong phòng chống HIV/AIDS nhưng vẫn đối mặt với thách thức trẻ hóa ca mắc và nguy cơ lây nhiễm âm thầm.\n\nCần tăng truyền thông, nguồn lực và dịch vụ thân thiện để giảm kỳ thị, mở rộng xét nghiệm và điều trị sớm.\n\nNgành y tế khuyến khích xét nghiệm định kỳ cho nhóm nguy cơ, điều trị ARV sớm và liên kết chăm sóc với cộng đồng để duy trì tuân thủ.\n\nĐồng thời, nâng cao dịch vụ dự phòng trước phơi nhiễm (PrEP), phát bao cao su, bơm kim sạch, và tư vấn tâm lý để giảm lây truyền.\n\nMở rộng xét nghiệm tiếp cận cộng đồng, giảm kỳ thị.\nTăng bao phủ điều trị ARV và hỗ trợ tuân thủ.\nĐẩy mạnh PrEP, can thiệp giảm hại cho nhóm nguy cơ cao.','2019-05-17 00:00:00'),(7,'70% dịch bệnh bắt nguồn từ động vật: đề nghị củng cố tuyến thú y công cộng','Đại biểu Quốc hội nhấn mạnh cần hoàn thiện pháp luật và củng cố năng lực tuyến thú y công cộng để ứng phó với dịch bệnh nguồn động vật, bảo vệ sức khỏe cộng đồng.\n\nKiểm soát dịch sớm, giám sát dịch tễ và phối hợp liên ngành là trọng tâm để giảm nguy cơ bùng phát.\n\nViệc tăng cường thú y cơ sở giúp phát hiện sớm, xử lý ổ dịch, tiêm phòng, kiểm soát vận chuyển và truy xuất nguồn gốc động vật.\n\nHệ thống giám sát liên thông giữa y tế, nông nghiệp và môi trường sẽ hỗ trợ cảnh báo sớm, bảo vệ sức khỏe con người trước bệnh truyền lây từ động vật.\n\nNâng năng lực thú y công cộng và thú y cơ sở.\nGiám sát dịch bệnh một sức khỏe, cảnh báo sớm.\nPhối hợp liên ngành kiểm soát vận chuyển, chăn nuôi an toàn.','2025-04-01 00:00:00');
+INSERT INTO `medical_news` VALUES (1,'Bộ Y tế xây dựng gói dịch vụ y tế cơ bản','Chủ trương tiến tới miễn viện phí...','2026-02-22 21:33:32'),(2,'WHO khuyến nghị Việt Nam mạnh tay với thuốc lá điện tử','Đại diện WHO tại Việt Nam đề xuất...','2026-02-22 21:33:32');
 /*!40000 ALTER TABLE `medical_news` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -186,18 +186,15 @@ DROP TABLE IF EXISTS `patient`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `patient` (
-  `identity_number` bigint NOT NULL,
-  `full_name` varchar(50) NOT NULL,
-  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
-  `date_of_birth` date DEFAULT NULL,
-  `phone` varchar(30) NOT NULL,
-  `email` varchar(200) DEFAULT NULL,
+  `id` int NOT NULL AUTO_INCREMENT,
+  `profile_id` int NOT NULL,
   `insurance_number` varchar(50) DEFAULT NULL,
-  `address` varchar(100) DEFAULT NULL,
   `emergency_contact_phone` varchar(30) DEFAULT NULL,
-  `last_update` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`identity_number`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `profile_id` (`profile_id`),
+  UNIQUE KEY `uk_patient_profile_id` (`profile_id`),
+  CONSTRAINT `fk_patient_profile` FOREIGN KEY (`profile_id`) REFERENCES `profile` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -206,7 +203,7 @@ CREATE TABLE `patient` (
 
 LOCK TABLES `patient` WRITE;
 /*!40000 ALTER TABLE `patient` DISABLE KEYS */;
-INSERT INTO `patient` VALUES (123456789001,'Nguyen An','FEMALE','1990-02-20','0916000001','anh@gmail.com',NULL,'Ha Noi',NULL,'2026-02-09 07:01:47'),(123456789002,'Tran Binh','MALE','1985-05-10','0916000002','binh@gmail.com',NULL,'Hai Phong',NULL,'2025-11-02 08:11:17'),(123456789003,'Le Chi','FEMALE','1992-03-14','0916000003','chi@gmail.com',NULL,'Nam Dinh',NULL,'2025-11-02 08:11:17'),(123456789004,'Pham Duong','MALE','2000-07-09','0916000004','duong@gmail.com',NULL,'Thai Binh',NULL,'2025-11-02 08:11:17'),(123456789005,'Hoang Giang','FEMALE','1998-11-01','0916000005','giang@gmail.com',NULL,'Ha Noi',NULL,'2025-11-02 08:11:17'),(123456789123,'Dương Đức Anh','MALE','2006-09-26','0345010345',NULL,NULL,'Cổ nhuế',NULL,'2026-02-12 17:03:38');
+INSERT INTO `patient` VALUES (1,1,NULL,NULL),(2,2,NULL,NULL),(3,3,NULL,NULL),(4,4,'123','123123'),(7,5,NULL,NULL),(8,6,NULL,NULL);
 /*!40000 ALTER TABLE `patient` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -221,7 +218,7 @@ CREATE TABLE `picture` (
   `id` int NOT NULL AUTO_INCREMENT,
   `picture_url` varchar(500) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -230,8 +227,43 @@ CREATE TABLE `picture` (
 
 LOCK TABLES `picture` WRITE;
 /*!40000 ALTER TABLE `picture` DISABLE KEYS */;
-INSERT INTO `picture` VALUES (1,'doctor-female-1.png'),(2,'doctor-female-2.png'),(3,'doctor-female-3.png'),(4,'doctor-female-4.png'),(5,'doctor-female-5.png'),(6,'doctor-female-6.png'),(7,'doctor-female-7.png'),(8,'doctor-male-1.png'),(9,'doctor-male-2.png'),(10,'doctor-male-3.png'),(11,'doctor-male-4.png'),(12,'doctor-male-5.png'),(13,'doctor-male-6.png'),(14,'doctor-male-7.png'),(15,'hospital.png'),(16,'leader-deputy-1.jpg'),(17,'leader-deputy-2.jpg'),(18,'leader-director.jpg'),(19,'logo.png'),(20,'logoo.png'),(21,'volunteer.png'),(22,'635050a2-4be7-4894-87d5-86c74a919c55_pngtree-cute-cartoon-light-bulb-image_1134759.jpg'),(23,'6e7b688c-1b39-4519-a9fb-e14145639f80_pngtree-cute-cartoon-light-bulb-image_1134759.jpg'),(24,'166b4a35-fa68-4e72-86e0-879aefe9691f_pngtree-cute-cartoon-light-bulb-image_1134759.jpg');
+INSERT INTO `picture` VALUES (1,'doctor-female-1.png'),(2,'doctor-male-1.png'),(3,'avatar-default.png');
 /*!40000 ALTER TABLE `picture` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `profile`
+--
+
+DROP TABLE IF EXISTS `profile`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `profile` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `account_id` int NOT NULL,
+  `full_name` varchar(100) DEFAULT NULL,
+  `identity_number` varchar(12) DEFAULT NULL,
+  `gender` enum('MALE','FEMALE','OTHER') DEFAULT NULL,
+  `date_of_birth` date DEFAULT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `phone_number` varchar(15) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `account_id` (`account_id`),
+  UNIQUE KEY `uk_profile_account_id` (`account_id`),
+  UNIQUE KEY `identity_number` (`identity_number`),
+  UNIQUE KEY `uk_identity_number` (`identity_number`),
+  CONSTRAINT `fk_profile_account` FOREIGN KEY (`account_id`) REFERENCES `account` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `profile`
+--
+
+LOCK TABLES `profile` WRITE;
+/*!40000 ALTER TABLE `profile` DISABLE KEYS */;
+INSERT INTO `profile` VALUES (1,1,'Duong Duc Anh','123456789001','MALE','1990-02-20','Ha Noi','0916000001'),(2,2,'Tran Binh','123456789002','MALE','1985-05-10','Hai Phong','0916000002'),(3,3,'Le Chi','123456789003','FEMALE','1992-03-14','Nam Dinh','0916000003'),(4,4,'Bác Sĩ','111111111111','MALE','1980-01-15','Bắc từ liêm','123456779'),(5,5,'Admin User','123456789123','OTHER','1990-01-01','Ha Noi','0900000000'),(6,7,'Bệnh Nhân',NULL,NULL,NULL,NULL,NULL);
+/*!40000 ALTER TABLE `profile` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -243,10 +275,10 @@ DROP TABLE IF EXISTS `role`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `role` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `name` varchar(50) NOT NULL,
-  `description` text,
+  `role_name` varchar(50) NOT NULL,
+  `description` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `name` (`name`)
+  UNIQUE KEY `uk_role_name` (`role_name`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
@@ -256,7 +288,7 @@ CREATE TABLE `role` (
 
 LOCK TABLES `role` WRITE;
 /*!40000 ALTER TABLE `role` DISABLE KEYS */;
-INSERT INTO `role` VALUES (1,'patient','This role is for the client/patient. They have the right to manage their personal information (patient profile), schedule new appointments, track their appointment status, and view examination/test results after the doctor completes the procedure.'),(2,'doctor','This role is for the client/patient. They have the right to manage their personal information (patient profile), schedule new appointments, track their appointment status, and view examination/test results after the doctor completes the procedure.'),(3,'admin','Full Access.');
+INSERT INTO `role` VALUES (1,'patient','This role is for the client/patient.'),(2,'doctor','This role is for healthcare professionals.'),(3,'admin','Full Access.');
 /*!40000 ALTER TABLE `role` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -269,4 +301,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-02-20 12:09:58
+-- Dump completed on 2026-02-24 10:01:16

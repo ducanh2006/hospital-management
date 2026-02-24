@@ -1,57 +1,39 @@
 package com.hospital.entity;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-
-import com.hospital.dto.Gender;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
+/**
+ * Mapping bảng `patient`.
+ * PK giờ là INT auto_increment (trước đây là identity_number LONG).
+ * Thông tin cá nhân nằm ở bảng `profile` thông qua FK profile_id.
+ */
 @Entity
 @Data
 @Table(name = "patient")
+@AllArgsConstructor
+@NoArgsConstructor
 public class PatientEntity {
 
     @Id
-    @NotNull(message = "Identity number is required")
-    @Column(name = "identity_number")
-    private Long identityNumber;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
 
-    @NotBlank(message = "Full name is required")
-    @Column(name = "full_name", nullable = false, length = 50)
-    private String fullName;
-
-    @Column
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
-
-    @Column(name = "date_of_birth")
-    private LocalDate dateOfBirth;
-
-    @NotBlank(message = "Phone number is required")
-    @Column(length = 30, nullable = false)
-    private String phone;
-
-    @Column(length = 200)
-    private String email;
+    @NotNull(message = "Profile ID is required")
+    @Column(name = "profile_id", nullable = false, unique = true)
+    private Integer profileId;
 
     @Column(name = "insurance_number", length = 50)
     private String insuranceNumber;
-    
-    @Column(length = 100)
-    private String address;
 
     @Column(name = "emergency_contact_phone", length = 30)
     private String emergencyContactPhone;
-
-    @Column(name = "last_update")
-    private LocalDateTime lastUpdate;
 }

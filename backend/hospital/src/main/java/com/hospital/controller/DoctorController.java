@@ -3,6 +3,8 @@ package com.hospital.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,6 +37,28 @@ public class DoctorController {
     @GetMapping
     public List<DoctorEntity> list() {
         return service.findAll();
+    }
+
+    /**
+     * GET /api/doctors/me
+     * Lấy bản ghi doctor của người dùng hiện tại.
+     */
+    @GetMapping("/me")
+    public ResponseEntity<DoctorEntity> getMyDoctor(@AuthenticationPrincipal Jwt jwt) {
+        return service.findMyDoctor(jwt.getSubject())
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
+    /**
+     * PUT /api/doctors
+     * Cập nhật bản ghi doctor của người dùng hiện tại.
+     */
+    @PutMapping
+    public ResponseEntity<DoctorEntity> updateMyDoctor(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestBody DoctorEntity updates) {
+        return ResponseEntity.ok(service.updateMyDoctor(jwt.getSubject(), updates));
     }
 
     // 2. Lấy danh sách bác sĩ đầy đủ thông tin (Rating trung bình và tổng số
@@ -90,10 +114,10 @@ public class DoctorController {
         return service.save(d); // Sử dụng save() có validate doctor null
     }
 
-    // 6. Cập nhật thông tin bác sĩ
+    // 6. Cập nhật thông tin bác sĩ (Admin dùng DTO)
     @PutMapping("/{id}")
-    public ResponseEntity<DoctorEntity> update(@PathVariable Integer id, @RequestBody DoctorEntity d) {
-        return ResponseEntity.ok(service.update(id, d));
+    public ResponseEntity<DoctorDTO> update(@PathVariable Integer id, @RequestBody DoctorDTO dto) {
+        return ResponseEntity.ok(service.update(id, dto));
     }
 
     // 7. Xóa bác sĩ theo ID

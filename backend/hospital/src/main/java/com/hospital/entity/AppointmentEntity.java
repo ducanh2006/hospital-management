@@ -31,16 +31,16 @@ public class AppointmentEntity {
     @Column(name = "doctor_id", nullable = false)
     private Integer doctorId;
 
-    @NotNull(message = "Patient identity number is required")
-    @Column(name = "patient_identity_number", nullable = false)
-    private Long patientIdentityNumber;
+    @NotNull(message = "Patient ID is required")
+    @Column(name = "patient_id", nullable = false)
+    private Integer patientId; 
 
     @Column(name = "department_id")
     private Integer departmentId;
 
-    @Column 
+    @Column
     private Integer rating;
-    
+
     @Column
     private LocalDateTime time;
 
@@ -55,7 +55,7 @@ public class AppointmentEntity {
     @UpdateTimestamp
     private LocalDateTime lastUpdate;
 
-    @Column(name = "test_results")
     @Lob
+    @Column(name = "test_results")
     private String testResults;
 }

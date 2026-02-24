@@ -1,6 +1,5 @@
 package com.hospital.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class DepartmentService{
+public class DepartmentService {
 
     private final DepartmentRepository repo;
 
@@ -33,7 +32,6 @@ public class DepartmentService{
         if (dept == null) {
             throw new IllegalArgumentException("Department must not be null");
         }
-        dept.setLastUpdate(LocalDateTime.now());
         return repo.save(dept);
     }
 
@@ -48,7 +46,6 @@ public class DepartmentService{
             throw new EntityNotFoundException("Department not found with id=" + id);
         }
         dept.setId(id);
-        dept.setLastUpdate(LocalDateTime.now());
         return repo.save(dept);
     }
 

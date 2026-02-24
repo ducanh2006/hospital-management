@@ -3,6 +3,8 @@ package com.hospital.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +19,6 @@ import com.hospital.entity.AppointmentEntity;
 import com.hospital.service.AppointmentService;
 
 import lombok.RequiredArgsConstructor;
-
 
 @RestController
 @CrossOrigin
@@ -38,13 +39,13 @@ public class AppointmentController {
     }
 
     @PostMapping
-    public AppointmentEntity create(@RequestBody AppointmentEntity a) {
-        return service.save(a);
+    public AppointmentEntity create(@AuthenticationPrincipal Jwt jwt, @RequestBody AppointmentEntity a) {
+        return service.save(jwt, a);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<AppointmentEntity> update(@PathVariable Integer id,@RequestBody AppointmentEntity a) {
-        return ResponseEntity.ok(service.update(id,a));
+    public ResponseEntity<AppointmentEntity> update(@PathVariable Integer id, @RequestBody AppointmentEntity a) {
+        return ResponseEntity.ok(service.update(id, a));
     }
 
     @DeleteMapping("/{id}")

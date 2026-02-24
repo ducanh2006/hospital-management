@@ -7,6 +7,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -27,6 +28,7 @@ public class MedicalNewsEntity {
     private String title;
     
     @NotBlank(message = "Content is required")
+    @Lob
     @Column(name = "content", nullable = false, columnDefinition = "TEXT")
     private String content;
     

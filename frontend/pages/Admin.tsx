@@ -119,7 +119,7 @@ const Admin: React.FC = () => {
 
       switch (activeTab) {
         case 'patients':
-          if (isEdit) await patientService.update(dataToSave.identityNumber, dataToSave);
+          if (isEdit) await patientService.update(dataToSave.id, dataToSave);
           else await patientService.create(dataToSave);
           break;
         case 'doctors':
@@ -312,10 +312,10 @@ const Admin: React.FC = () => {
                   {data.map((item, idx) => (
                     <tr key={idx} className="hover:bg-gray-50 transition-colors">
                       {activeTab === 'patients' && <>
-                        <td className="px-6 py-4 font-bold">{item.identityNumber}</td>
+                        <td className="px-6 py-4 font-bold">{item.id}</td>
                         <td className="px-6 py-4">{item.fullName}</td>
                         <td className="px-6 py-4">{item.gender}</td>
-                        <td className="px-6 py-4">{item.phone}</td>
+                        <td className="px-6 py-4">{item.phoneNumber}</td>
                         <td className="px-6 py-4 text-gray-500">{item.address}</td>
                       </>}
                       {activeTab === 'doctors' && <>
@@ -330,7 +330,7 @@ const Admin: React.FC = () => {
                         <td className="px-6 py-4 font-bold text-gray-500">{item.id}</td>
                         <td className="px-6 py-4 font-semibold text-blue-600">{item.fullName}</td>
                         <td className="px-6 py-4">{item.specialization}</td>
-                        <td className="px-6 py-4">{item.phone}</td>
+                        <td className="px-6 py-4">{item.phoneNumber}</td>
                         <td className="px-6 py-4">{depts.find(d => d.id === item.departmentId)?.name}</td>
                       </>}
                       {activeTab === 'departments' && <>
@@ -341,7 +341,7 @@ const Admin: React.FC = () => {
                       </>}
                       {activeTab === 'appointments' && <>
                         <td className="px-6 py-4 font-bold">{item.id}</td>
-                        <td className="px-6 py-4">{item.patientIdentityNumber}</td>
+                        <td className="px-6 py-4">{item.patientId}</td>
                         <td className="px-6 py-4 font-semibold text-blue-600">BS. {doctors.find(d => d.id === item.doctorId)?.fullName}</td>
                         <td className="px-6 py-4 text-gray-500 font-medium">{formatDateTime(item.time)}</td>
                         <td className="px-6 py-4">
@@ -360,7 +360,7 @@ const Admin: React.FC = () => {
                       </>}
                       <td className="px-6 py-4 flex justify-center gap-2">
                         <button onClick={() => openModal(item)} className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"><i className="fas fa-edit"></i></button>
-                        <button onClick={() => handleDelete(item.id || item.identityNumber)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
+                        <button onClick={() => handleDelete(item.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><i className="fas fa-trash"></i></button>
                       </td>
                     </tr>
                   ))}
@@ -381,29 +381,17 @@ const Admin: React.FC = () => {
             <h2 className="text-2xl font-black mb-6">{isEdit ? 'Cập nhật' : 'Thêm mới'} {tabs.find(t => t.id === activeTab)?.label}</h2>
             <form onSubmit={handleSave} className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {activeTab === 'patients' && <>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">Profile ID</label>
+                  <input type="number" value={formData.profileId || ''} onChange={e => setFormData({ ...formData, profileId: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">Số bảo hiểm</label>
+                  <input type="text" value={formData.insuranceNumber || ''} onChange={e => setFormData({ ...formData, insuranceNumber: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                </div>
                 <div className="space-y-1 md:col-span-2">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Số CCCD</label>
-                  <input type="number" readOnly={isEdit} value={formData.identityNumber || ''} onChange={e => setFormData({ ...formData, identityNumber: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Họ tên</label>
-                  <input type="text" value={formData.fullName || ''} onChange={e => setFormData({ ...formData, fullName: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Giới tính</label>
-                  <select value={formData.gender || ''} onChange={e => setFormData({ ...formData, gender: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl">
-                    <option value="MALE">Nam</option>
-                    <option value="FEMALE">Nữ</option>
-                    <option value="OTHER">Khác</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">SĐT</label>
-                  <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">Địa chỉ</label>
-                  <input type="text" value={formData.address || ''} onChange={e => setFormData({ ...formData, address: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">SĐT Khẩn cấp</label>
+                  <input type="text" value={formData.emergencyContactPhone || ''} onChange={e => setFormData({ ...formData, emergencyContactPhone: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
               </>}
               {activeTab === 'doctors' && <>
@@ -423,8 +411,8 @@ const Admin: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">SĐT</label>
-                  <input type="text" value={formData.phone || ''} onChange={e => setFormData({ ...formData, phone: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">Profile ID</label>
+                  <input type="number" value={formData.profileId || ''} onChange={e => setFormData({ ...formData, profileId: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Kinh nghiệm (Năm)</label>
@@ -441,8 +429,8 @@ const Admin: React.FC = () => {
               </>}
               {activeTab === 'appointments' && <>
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase">CCCD Bệnh nhân</label>
-                  <input type="number" value={formData.patientIdentityNumber || ''} onChange={e => setFormData({ ...formData, patientIdentityNumber: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
+                  <label className="text-[10px] font-bold text-gray-400 uppercase">ID Bệnh nhân</label>
+                  <input type="number" value={formData.patientId || ''} onChange={e => setFormData({ ...formData, patientId: e.target.value })} className="w-full p-3 bg-gray-50 border rounded-xl" required />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-gray-400 uppercase">Bác sĩ</label>

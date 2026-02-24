@@ -1,28 +1,30 @@
 package com.hospital.dto;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * DoctorDTO — giữ nguyên các fields cần thiết cho frontend.
+ * Các trường fullName, gender, dateOfBirth được lấy từ JOIN với bảng profile
+ * trong các JPQL queries tại DoctorRepository.
+ */
 @AllArgsConstructor
 @Data
 @NoArgsConstructor
 public class DoctorDTO {
     private Integer id;
-    private String fullName;
-    private Gender gender;
+    private String fullName; // từ profile.full_name
+    private Gender gender; // từ profile.gender
     private String specialization;
-    private LocalDate dateOfBirth;
+    private LocalDate dateOfBirth; // từ profile.date_of_birth
     private Integer departmentId;
-    private String email;
-    private String phone;
+    private String phoneNumber; // từ profile.phone_number
     private String bio;
     private Integer experienceYear;
-    private String pictureUrl;
-    private LocalDateTime lastUpdate;
+    private String pictureUrl; // từ picture.picture_url
     private Double avgRating;
     private Long totalReviews;
 }

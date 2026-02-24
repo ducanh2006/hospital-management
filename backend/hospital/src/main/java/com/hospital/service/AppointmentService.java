@@ -3,35 +3,42 @@ package com.hospital.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import com.hospital.entity.AppointmentEntity;
 import com.hospital.repository.AppointmentRepository;
+import com.hospital.repository.PatientRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AppointmentService{
+public class AppointmentService {
 
     private final AppointmentRepository repo;
+    private final PatientRepository patientRepo;
 
     public List<AppointmentEntity> findAll() {
         return repo.findAll();
     }
 
     public Optional<AppointmentEntity> findById(Integer id) {
-        if(id == null){
+        if (id == null) {
             throw new IllegalArgumentException("Appoinment id must not be null");
         }
         return repo.findById(id);
     }
 
-    public AppointmentEntity save(AppointmentEntity appointment) {
+    public AppointmentEntity save(@AuthenticationPrincipal Jwt jwt, AppointmentEntity appointment) {
+        String keycloakId = jwt.getSubject();
+        Integer patientId = patientRepo.findByKeycloakId(keycloakId).getId();
         if (appointment == null) {
             throw new IllegalArgumentException("Appointment must not be null");
         }
+        appointment.setPatientId(patientId);
         return repo.save(appointment);
     }
 

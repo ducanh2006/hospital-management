@@ -1,7 +1,35 @@
 import api from './api';
 import { Doctor, Department, MedicalNews, Patient, Appointment, PageResponse } from '../types';
+import { AppointmentHistoryDTO } from '../types';
+
+export const profileService = {
+  /** Lấy profile của người dùng hiện tại (dùng JWT). */
+  getMe: () => api.get<ProfileDTO>('/profiles/me'),
+  /** Cập nhật profile. */
+  updateMe: (data: Partial<ProfileDTO>) => api.put<ProfileDTO>('/profiles', data),
+};
+
+export const patientService = {
+  /** Lấy bản ghi patient của người dùng hiện tại. */
+  getMe: () => api.get<Patient>('/patients/me'),
+  /** Cập nhật bản ghi patient. */
+  updateMe: (data: Partial<Patient>) => api.put<Patient>('/patients', data),
+
+  getById: (id: string | number) => api.get<Patient>(`/patients/${id}`),
+  create: (data: Partial<Patient>) => api.post('/patients', data),
+  update: (id: string | number, data: Partial<Patient>) => api.put(`/patients/${id}`, data),
+  delete: (id: string | number) => api.delete(`/patients/${id}`),
+  /** Lấy lịch sử theo patient.id — vẫn giữ cho admin dùng */
+  getAppointments: (id: string | number) => api.get<AppointmentHistoryDTO[]>(`/patients/appointments/${id}`),
+  getAll: () => api.get<Patient[]>('/patients'),
+};
 
 export const doctorService = {
+  /** Lấy bản ghi doctor của người dùng hiện tại. */
+  getMe: () => api.get<Doctor>('/doctors/me'),
+  /** Cập nhật bản ghi doctor. */
+  updateMe: (data: Partial<Doctor>) => api.put<Doctor>('/doctors', data),
+
   getAll: () => api.get<Doctor[]>('/doctors'),
   getAllWithRating: () => api.get<Doctor[]>('/doctors/with-rating'),
   getById: (id: number | string) => api.get<Doctor>(`/doctors/${id}`),
@@ -11,7 +39,6 @@ export const doctorService = {
 
   /**
    * Tìm kiếm bác sĩ nâng cao — gọi GET /api/doctors/search
-   * Phân trang do backend xử lý (Deferred Join), trả về PageResponse<Doctor>.
    */
   search: (params: {
     name?: string;
@@ -24,12 +51,22 @@ export const doctorService = {
 
 export const accountService = {
   /**
-   * Đồng bộ tài khoản với backend sau khi đăng nhập Keycloak.
-   * Chỉ cần gửi Authorization: Bearer <token> trong header.
-   * Header này được tự động đính kèm bởi api interceptor (api.ts).
-   * Backend sẽ đọc JWT từ header, tự parse sub/email/roles và upsert vào DB.
+   * Đồng bộ tài khoản sau khi đăng nhập — gửi JWT tự động qua interceptor.
+   * Backend upsert: account + profile + patient/doctor dựa trên role.
    */
   syncLogin: () => api.post('/accounts/login'),
+
+  /** @deprecated Use profileService.getMe() */
+  getMyProfile: () => api.get<ProfileDTO>('/accounts/me/profile'),
+
+  /** @deprecated Use profileService.updateMe() */
+  updateMyProfile: (data: Partial<ProfileDTO>) => api.put<ProfileDTO>('/accounts/me/profile', data),
+
+  /**
+   * Lịch sử khám bệnh của bệnh nhân đang đăng nhập.
+   * Dùng cho TestResults và Booking — không cần nhập CCCD.
+   */
+  getMyAppointments: () => api.get<AppointmentHistoryDTO[]>('/accounts/me/appointments'),
 };
 
 export const departmentService = {
@@ -48,14 +85,6 @@ export const newsService = {
   delete: (id: number) => api.delete(`/medical-news/${id}`),
 };
 
-export const patientService = {
-  getById: (cccd: string | number) => api.get<Patient>(`/patients/${cccd}`),
-  create: (data: Partial<Patient>) => api.post('/patients', data),
-  update: (cccd: string | number, data: Partial<Patient>) => api.put(`/patients/${cccd}`, data),
-  delete: (cccd: string | number) => api.delete(`/patients/${cccd}`),
-  getAppointments: (cccd: string | number) => api.get<Appointment[]>(`/patients/appointments/${cccd}`),
-  getAll: () => api.get<Patient[]>('/patients'),
-};
 
 export const appointmentService = {
   create: (data: any) => api.post('/appointments', data),
@@ -74,3 +103,17 @@ export const pictureService = {
     });
   }
 };
+
+// ─── Shared DTOs mirrored from backend ───────────────────────────────────────
+
+/** Khớp với ProfileEntity trả về từ /accounts/me/profile */
+export interface ProfileDTO {
+  id?: number;
+  accountId?: number;
+  fullName?: string;
+  identityNumber?: string;   // CCCD (12 số)
+  gender?: string;           // 'MALE' | 'FEMALE' | 'OTHER'
+  dateOfBirth?: string;      // 'YYYY-MM-DD'
+  address?: string;
+  phoneNumber?: string;
+}

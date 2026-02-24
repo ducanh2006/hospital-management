@@ -1,6 +1,5 @@
 package com.hospital.service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -24,12 +23,13 @@ import lombok.RequiredArgsConstructor;
 public class DoctorService {
 
     private final DoctorRepository repo;
+    private final com.hospital.repository.AccountRepository accountRepo;
+    private final com.hospital.repository.ProfileRepository profileRepo;
 
     public List<DoctorEntity> findAll() {
         return repo.findAll();
     }
 
-    // Query giống findAll ở trên nhưng thông tin đầy đủ hơn, có cả rating
     public List<DoctorDTO> findAllDoctorsWithRating() {
         return repo.findAllDoctorsWithRating();
     }
@@ -37,19 +37,14 @@ public class DoctorService {
     /**
      * Tìm kiếm bác sĩ nâng cao với phân trang tối ưu (Deferred Join — 2 bước JPQL).
      *
-     * Bước 1: findDoctorIds() — chỉ SELECT d.id với điều kiện lọc + Pageable.
-     * Không JOIN bảng phụ → DB chỉ quét index. Spring Data tự sinh COUNT.
-     *
-     * Bước 2: findDoctorsByIds() — lấy đầy đủ DoctorDTO (JOIN picture, appointment)
-     * chỉ trên đúng danh sách ID của trang hiện tại.
+     * Bước 1: findDoctorIds() — chỉ SELECT d.id + JOIN profile cho filter tên.
+     * Bước 2: findDoctorsByIds() — lấy đầy đủ DoctorDTO chỉ trên IDs của trang.
      */
     public PageResponse<DoctorDTO> searchDoctors(DoctorSearchRequest req) {
-        // Convert gender string → enum (null = không lọc theo gender)
         Gender gender = (req.getGender() != null && !req.getGender().isBlank())
                 ? Gender.valueOf(req.getGender().toUpperCase())
                 : null;
 
-        // Bước 1: index-only scan, có phân trang + count tự động
         Page<Integer> idPage = repo.findDoctorIds(
                 req.getName(),
                 gender,
@@ -61,7 +56,6 @@ public class DoctorService {
                     idPage.getTotalElements(), idPage.getTotalPages());
         }
 
-        // Bước 2: full fetch chỉ cho IDs của trang này
         List<DoctorDTO> content = repo.findDoctorsByIds(idPage.getContent());
 
         return new PageResponse<>(content, req.getPage(), req.getSize(),
@@ -75,32 +69,59 @@ public class DoctorService {
         return repo.findByIdDoctorsWithRating(id);
     }
 
-    // Query tìm lịch hẹn chưa hoàn thành của bác sĩ
     public List<AppointmentEntity> findNonCompletedAppointments(Integer doctorId) {
         if (!repo.existsById(doctorId)) {
             throw new EntityNotFoundException("Doctor not found with id=" + doctorId);
         }
-        System.out.println(" vao repository ");
         return repo.findNonCompletedAppointmentsByDoctor(doctorId);
     }
 
     public DoctorEntity save(DoctorEntity doctor) {
         if (doctor == null)
             throw new IllegalArgumentException("Doctor must not be null");
-        doctor.setLastUpdate(LocalDateTime.now());
+        // lastUpdate đã được xóa khỏi schema mới → không set nữa
         return repo.save(doctor);
     }
 
-    public DoctorEntity update(Integer id, DoctorEntity doctor) {
-        if (id == null)
-            throw new IllegalArgumentException("ID must not be null");
-        if (doctor.getLastUpdate() == null) {
-            doctor.setLastUpdate(LocalDateTime.now());
+    /**
+     * Cập nhật thông tin chi tiết bác sĩ (Admin dùng).
+     * Cập nhật cả bảng profile (tên, giới tính, ngày sinh, sđt)
+     * và bảng doctor (chuyên khoa, khoa, tiểu sử, kinh nghiệm).
+     */
+    public DoctorDTO update(Integer id, DoctorDTO dto) {
+        DoctorEntity doctor = repo.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Doctor not found with id=" + id));
+
+        // 1. Cập nhật profile
+        if (doctor.getProfileId() != null) {
+            profileRepo.findById(doctor.getProfileId()).ifPresent(profile -> {
+                if (dto.getFullName() != null)
+                    profile.setFullName(dto.getFullName());
+                if (dto.getGender() != null)
+                    profile.setGender(dto.getGender());
+                if (dto.getDateOfBirth() != null)
+                    profile.setDateOfBirth(dto.getDateOfBirth());
+                if (dto.getPhoneNumber() != null)
+                    profile.setPhoneNumber(dto.getPhoneNumber());
+                profileRepo.save(profile);
+            });
         }
-        doctor.setId(id);
-        repo.findById(doctor.getId())
-                .orElseThrow(() -> new EntityNotFoundException("Doctor not found with id=" + doctor.getId()));
-        return repo.save(doctor);
+
+        // 2. Cập nhật doctor
+        if (dto.getSpecialization() != null)
+            doctor.setSpecialization(dto.getSpecialization());
+        if (dto.getDepartmentId() != null)
+            doctor.setDepartmentId(dto.getDepartmentId());
+        if (dto.getBio() != null)
+            doctor.setBio(dto.getBio());
+        if (dto.getExperienceYear() != null)
+            doctor.setExperienceYear(dto.getExperienceYear());
+        // pictureUrl thường được xử lý riêng hoặc lấy qua ID nếu có field pictureId
+
+        repo.save(doctor);
+
+        // Trả về DTO mới nhất
+        return findById(id).orElse(dto);
     }
 
     public void deleteById(Integer id) {
@@ -108,5 +129,35 @@ public class DoctorService {
             throw new EntityNotFoundException("Doctor not found with id=" + id);
         }
         repo.deleteById(id);
+    }
+
+    /**
+     * Tìm bản ghi doctor của người dùng hiện tại theo Keycloak sub.
+     */
+    public Optional<DoctorEntity> findMyDoctor(String sub) {
+        return accountRepo.findByKeycloakUserId(sub)
+                .flatMap(acc -> profileRepo.findByAccountId(acc.getId()))
+                .flatMap(prof -> repo.findByProfileId(prof.getId()));
+    }
+
+    /**
+     * Cập nhật bản ghi doctor của người dùng hiện tại.
+     */
+    public DoctorEntity updateMyDoctor(String sub, DoctorEntity updates) {
+        DoctorEntity doctor = findMyDoctor(sub)
+                .orElseThrow(() -> new EntityNotFoundException("Doctor record not found for user: " + sub));
+
+        if (updates.getSpecialization() != null)
+            doctor.setSpecialization(updates.getSpecialization());
+        if (updates.getDepartmentId() != null)
+            doctor.setDepartmentId(updates.getDepartmentId());
+        if (updates.getBio() != null)
+            doctor.setBio(updates.getBio());
+        if (updates.getExperienceYear() != null)
+            doctor.setExperienceYear(updates.getExperienceYear());
+        if (updates.getPictureId() != null)
+            doctor.setPictureId(updates.getPictureId());
+
+        return repo.save(doctor);
     }
 }

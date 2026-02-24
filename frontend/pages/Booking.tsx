@@ -1,30 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { doctorService, patientService, appointmentService } from '../services/hospitalService';
-import { Doctor, Gender } from '../types';
+import { doctorService, accountService, appointmentService } from '../services/hospitalService';
+import { Doctor } from '../types';
 import { getImageUrl, getGenderText } from '../utils/helpers';
+import { useAuth } from '../context/AuthContext';
 import CustomButton from '../components/ui/CustomButton';
 
 const Booking: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const { isAuthenticated, isLoading: authLoading, login } = useAuth();
+
   const [doctorId, setDoctorId] = useState(searchParams.get('doctorId') || "");
-  const [cccd, setCccd] = useState("");
   const [bookingTime, setBookingTime] = useState("");
   const [notes, setNotes] = useState("");
-  
+
   const [doctorInfo, setDoctorInfo] = useState<Doctor | null>(null);
   const [isLoadingDoc, setIsLoadingDoc] = useState(false);
   const [docError, setDocError] = useState(false);
-
-  const [showRegModal, setShowRegModal] = useState(false);
-  const [regForm, setRegForm] = useState({
-    fullName: '',
-    dob: '',
-    gender: Gender.MALE,
-    phone: '',
-    address: ''
-  });
 
   // Handle Debounced Doctor Search
   useEffect(() => {
@@ -40,7 +33,7 @@ const Booking: React.FC = () => {
       try {
         const res = await doctorService.getById(doctorId);
         setDoctorInfo(res.data);
-      } catch (err) {
+      } catch {
         setDoctorInfo(null);
         setDocError(true);
       } finally {
@@ -54,68 +47,60 @@ const Booking: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!isAuthenticated) {
+      alert("Vui lòng đăng nhập để đặt lịch khám.");
+      login();
+      return;
+    }
+
     if (!doctorInfo) {
       alert("Vui lòng nhập ID Bác sĩ hợp lệ.");
       return;
     }
 
-    if (cccd.length < 9) {
-      alert("Vui lòng nhập CCCD hợp lệ.");
-      return;
-    }
-
     try {
-      const checkRes = await patientService.getById(cccd);
-      // If patient exists, proceed to book
+      // Lấy patient record của người dùng hiện tại qua JWT
+      const apptRes = await accountService.getMyAppointments().catch(() => null);
+
+      // Lấy patient.id từ bất kỳ appointment đã có, hoặc gọi thêm endpoint nếu cần
+      // Backend tự tìm qua JWT → account → profile → patient
       await createAppointment();
     } catch (err: any) {
       if (err.response?.status === 404) {
-        // Patient doesn't exist, open registration
-        setShowRegModal(true);
+        alert(
+          "Bạn chưa có hồ sơ bệnh nhân trong hệ thống.\n" +
+          "Hãy liên hệ quầy tiếp nhận hoặc admin để tạo hồ sơ trước khi đặt lịch trực tuyến."
+        );
       } else {
-        alert("Lỗi kiểm tra thông tin bệnh nhân.");
+        alert("Lỗi kiểm tra thông tin bệnh nhân. Vui lòng thử lại.");
       }
     }
   };
 
   const createAppointment = async () => {
     try {
+      // Backend đọc JWT để lấy patient.id tự động
       const payload = {
-        patientIdentityNumber: parseInt(cccd),
         doctorId: parseInt(doctorId),
         departmentId: doctorInfo?.departmentId || null,
         time: bookingTime,
         status: "PENDING",
         notes: notes
+        // patientId sẽ được backend tự resolve từ JWT
       };
 
       await appointmentService.create(payload);
       alert("ĐẶT LỊCH THÀNH CÔNG! Hệ thống đã ghi nhận lịch khám.");
       window.location.reload();
-    } catch (err) {
-      alert("Lỗi đặt lịch khám. Vui lòng thử lại.");
-    }
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const patientData = {
-        identityNumber: parseInt(cccd),
-        fullName: regForm.fullName,
-        gender: regForm.gender,
-        dateOfBirth: regForm.dob || null,
-        phone: regForm.phone,
-        address: regForm.address,
-        lastUpdate: new Date().toISOString()
-      };
-
-      await patientService.create(patientData);
-      alert("Đăng ký hồ sơ thành công! Đang tiến hành đặt lịch...");
-      setShowRegModal(false);
-      await createAppointment();
-    } catch (err) {
-      alert("Lỗi tạo hồ sơ bệnh nhân.");
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        alert(
+          "Tài khoản của bạn chưa có hồ sơ bệnh nhân.\n" +
+          "Vui lòng liên hệ bệnh viện hoặc admin để tạo hồ sơ."
+        );
+      } else {
+        alert("Lỗi đặt lịch khám. Vui lòng thử lại.");
+      }
     }
   };
 
@@ -127,56 +112,61 @@ const Booking: React.FC = () => {
           <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
             <i className="fas fa-calendar-alt text-[#0093E9]"></i> Thông tin đặt lịch
           </h2>
+
+          {/* Login required warning */}
+          {!authLoading && !isAuthenticated && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center gap-4">
+              <span className="text-2xl">⚠️</span>
+              <div>
+                <p className="font-semibold text-amber-800">Bạn chưa đăng nhập</p>
+                <p className="text-sm text-amber-700">Hãy đăng nhập để hệ thống nhận diện hồ sơ bệnh nhân của bạn.</p>
+              </div>
+              <button
+                onClick={login}
+                className="ml-auto shrink-0 px-4 py-2 bg-[#0093E9] text-white rounded-xl text-sm font-bold"
+              >
+                Đăng nhập
+              </button>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Số CCCD / CMND <span className="text-red-500">*</span></label>
-                <input 
-                  type="number" 
-                  value={cccd}
-                  onChange={(e) => setCccd(e.target.value)}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" 
-                  placeholder="Nhập 12 số CCCD..." 
-                  required 
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-semibold text-gray-700">Mã số Bác sĩ (ID) <span className="text-red-500">*</span></label>
-                <input 
-                  type="number" 
-                  value={doctorId}
-                  onChange={(e) => setDoctorId(e.target.value)}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" 
-                  placeholder="Nhập ID bác sĩ..." 
-                  required 
-                />
-              </div>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Mã số Bác sĩ (ID) <span className="text-red-500">*</span></label>
+              <input
+                type="number"
+                value={doctorId}
+                onChange={(e) => setDoctorId(e.target.value)}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100"
+                placeholder="Nhập ID bác sĩ..."
+                required
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">Thời gian khám <span className="text-red-500">*</span></label>
-              <input 
-                type="datetime-local" 
+              <input
+                type="datetime-local"
                 value={bookingTime}
                 onChange={(e) => setBookingTime(e.target.value)}
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" 
-                required 
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100"
+                required
               />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-semibold text-gray-700">Ghi chú / Triệu chứng</label>
-              <textarea 
+              <textarea
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                rows={4} 
-                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100" 
+                rows={4}
+                className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-blue-100"
                 placeholder="Mô tả sơ qua về tình trạng sức khỏe..."
               ></textarea>
             </div>
 
-            <CustomButton type="submit" className="w-full py-4 text-lg">
-              Xác nhận Đặt lịch
+            <CustomButton type="submit" className="w-full py-4 text-lg" disabled={!isAuthenticated}>
+              {isAuthenticated ? "Xác nhận Đặt lịch" : "Đăng nhập để đặt lịch"}
             </CustomButton>
           </form>
         </div>
@@ -190,21 +180,20 @@ const Booking: React.FC = () => {
             </div>
           ) : doctorInfo ? (
             <div className="w-full animate-fade-in-up">
-              <img 
-                src={getImageUrl(doctorInfo.photoUrl, doctorInfo.gender)} 
-                alt="Avatar" 
+              <img
+                src={getImageUrl(doctorInfo.pictureUrl, doctorInfo.gender)}
+                alt="Avatar"
                 className="w-32 h-32 rounded-full border-4 border-white shadow-lg mx-auto mb-4 object-cover"
               />
               <h3 className="text-xl font-bold text-[#0093E9] mb-1">{doctorInfo.fullName}</h3>
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">{doctorInfo.specialization}</p>
-              
+
               <div className="bg-white p-6 rounded-2xl shadow-sm text-left text-sm space-y-3">
                 <p>👤 <strong>Giới tính:</strong> {getGenderText(doctorInfo.gender)}</p>
                 <p>🎓 <strong>Kinh nghiệm:</strong> {doctorInfo.experienceYear} năm</p>
                 <p>⭐ <strong>Đánh giá:</strong> <span className="text-yellow-500 font-bold">{doctorInfo.avgRating?.toFixed(1) || '0.0'} / 5.0</span></p>
                 <hr className="border-dashed" />
-                <p>📧 <strong>Email:</strong> {doctorInfo.email || 'Liên hệ bệnh viện'}</p>
-                <p>📞 <strong>SĐT:</strong> {doctorInfo.phone || 'Liên hệ bệnh viện'}</p>
+                <p>📞 <strong>SĐT:</strong> {doctorInfo.phoneNumber || 'Liên hệ bệnh viện'}</p>
               </div>
             </div>
           ) : docError ? (
@@ -221,79 +210,6 @@ const Booking: React.FC = () => {
           )}
         </div>
       </div>
-
-      {/* Registration Modal */}
-      {showRegModal && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-y-auto p-8 animate-fade-in-up">
-            <h2 className="text-2xl font-bold text-[#0093E9] text-center mb-2">Đăng ký hồ sơ bệnh nhân</h2>
-            <p className="text-center text-gray-500 mb-8">CCCD này chưa tồn tại trong hệ thống. Vui lòng tạo hồ sơ mới.</p>
-            
-            <form onSubmit={handleRegister} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-sm font-semibold">Họ và tên <span className="text-red-500">*</span></label>
-                <input 
-                  type="text" 
-                  value={regForm.fullName}
-                  onChange={(e) => setRegForm({...regForm, fullName: e.target.value})}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none" 
-                  required 
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold">Ngày sinh</label>
-                  <input 
-                    type="date" 
-                    value={regForm.dob}
-                    onChange={(e) => setRegForm({...regForm, dob: e.target.value})}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none" 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-sm font-semibold">Giới tính</label>
-                  <select 
-                    value={regForm.gender}
-                    onChange={(e) => setRegForm({...regForm, gender: e.target.value as Gender})}
-                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none"
-                  >
-                    <option value={Gender.MALE}>Nam</option>
-                    <option value={Gender.FEMALE}>Nữ</option>
-                    <option value={Gender.OTHER}>Khác</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-semibold">Số điện thoại <span className="text-red-500">*</span></label>
-                <input 
-                  type="tel" 
-                  value={regForm.phone}
-                  onChange={(e) => setRegForm({...regForm, phone: e.target.value})}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none" 
-                  required 
-                />
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-sm font-semibold">Địa chỉ</label>
-                <input 
-                  type="text" 
-                  value={regForm.address}
-                  onChange={(e) => setRegForm({...regForm, address: e.target.value})}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl outline-none" 
-                />
-              </div>
-
-              <div className="flex gap-4 mt-8">
-                <CustomButton variant="secondary" className="flex-1" onClick={() => setShowRegModal(false)}>Hủy</CustomButton>
-                <CustomButton type="submit" className="flex-[2]">Lưu hồ sơ & Tiếp tục</CustomButton>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

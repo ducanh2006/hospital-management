@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { APP_ROUTES, UPLOAD_BASE_URL } from '../../constants/config';
 import { useAuth } from '../../context/AuthContext';
-import { patientService } from '../../services/hospitalService';
+import { accountService, profileService, patientService, doctorService, ProfileDTO } from '../../services/hospitalService';
 
 /** Lấy màu badge theo role */
 const roleBadgeStyle = (role: string): React.CSSProperties => {
@@ -28,55 +28,80 @@ const isGoogleAccount = (email?: string) => {
 };
 
 /* ─────────────────────────────────────────────────────────────
-   ProfileModal
+   ProfileModal — đọc/ghi /api/accounts/me/profile
    ───────────────────────────────────────────────────────────── */
 interface ProfileModalProps {
   user: { username: string; email?: string; firstName?: string; lastName?: string };
   onClose: () => void;
 }
 
+const inputStyle: React.CSSProperties = {
+  width: '100%', boxSizing: 'border-box',
+  padding: '10px 14px', borderRadius: 12,
+  border: '1.5px solid #e2e8f0', fontSize: 14,
+  outline: 'none', background: '#f8fafc',
+};
+
+const btnSecondaryStyle: React.CSSProperties = {
+  flex: 1, padding: '12px', borderRadius: 12, border: '1.5px solid #e2e8f0', background: 'white', fontWeight: 600, fontSize: 14, cursor: 'pointer', color: '#64748b',
+};
+
+const btnPrimaryStyle = (saving: boolean): React.CSSProperties => ({
+  flex: 1, padding: '12px', borderRadius: 12, border: 'none', background: saving ? '#94a3b8' : 'linear-gradient(135deg, #0093E9, #0066CC)', fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer', color: 'white', boxShadow: saving ? 'none' : '0 4px 12px rgba(0,147,233,0.3)',
+});
+
 const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose }) => {
-  const [cccd, setCccd] = useState('');
-  const [email, setEmail] = useState(user.email ?? '');
-  const [phone, setPhone] = useState('');
+  const { hasRole } = useAuth();
+  const isPatient = hasRole('patient');
+  const isDoctor = hasRole('doctor');
+
+  const [profileForm, setProfileForm] = useState<Partial<ProfileDTO>>({});
+  const [patientForm, setPatientForm] = useState<any>({});
+  const [doctorForm, setDoctorForm] = useState<any>({});
+
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const overlayRef = useRef<HTMLDivElement>(null);
 
-  const gmailLocked = isGoogleAccount(user.email);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const promises: Promise<any>[] = [profileService.getMe()];
+        if (isPatient) promises.push(patientService.getMe());
+        if (isDoctor) promises.push(doctorService.getMe());
 
-  // Đóng khi click ngoài modal
+        const results = await Promise.all(promises);
+        setProfileForm(results[0].data || {});
+        if (isPatient) setPatientForm(results[promises.indexOf(patientService.getMe())]?.data || {});
+        if (isDoctor) setDoctorForm(results[promises.indexOf(doctorService.getMe())]?.data || {});
+      } catch (err) {
+        console.warn('Failed to fetch full profile data, using fallback defaults');
+        setProfileForm({
+          fullName: user.firstName ? `${user.firstName} ${user.lastName ?? ''}`.trim() : user.username,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   const handleOverlayClick = (e: React.MouseEvent) => {
     if (e.target === overlayRef.current) onClose();
   };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cccd.trim()) { setError('Vui lòng nhập số căn cước công dân.'); return; }
     setSaving(true);
     setError('');
     try {
-      // Thử lấy bản ghi patient theo CCCD
-      let existing: any = null;
-      try { existing = await patientService.getById(cccd); } catch { }
+      const updates: Promise<any>[] = [profileService.updateMe(profileForm)];
+      if (isPatient) updates.push(patientService.updateMe(patientForm));
+      if (isDoctor) updates.push(doctorService.updateMe(doctorForm));
 
-      const payload = {
-        identityNumber: cccd,
-        fullName: user.firstName
-          ? `${user.firstName} ${user.lastName ?? ''}`.trim()
-          : user.username,
-        phone: phone || undefined,
-        // Chỉ cập nhật email nếu không bị khoá (không phải tài khoản Google)
-        ...(gmailLocked ? {} : { email: email || undefined }),
-      };
-
-      if (existing?.data) {
-        await patientService.update(cccd, payload);
-      } else {
-        await patientService.create(payload);
-      }
-
+      await Promise.all(updates);
       setSuccess(true);
       setTimeout(onClose, 1400);
     } catch (err: any) {
@@ -85,6 +110,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose }) => {
       setSaving(false);
     }
   };
+
+  if (loading) return null; // Or a spinner
+
+  const gmailLocked = isGoogleAccount(user.email);
 
   return (
     <div
@@ -99,10 +128,10 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose }) => {
       }}
     >
       <div style={{
-        background: 'white', borderRadius: 24, width: '100%', maxWidth: 460,
+        background: 'white', borderRadius: 24, width: '100%', maxWidth: 500,
+        maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 32px 64px rgba(0,0,0,0.2)',
         animation: 'slideUp 0.22s cubic-bezier(.34,1.56,.64,1)',
-        overflow: 'hidden',
       }}>
         {/* Header */}
         <div style={{
@@ -134,8 +163,6 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose }) => {
               alignItems: 'center', justifyContent: 'center',
               transition: 'background 0.2s',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.3)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.15)')}
           >
             ✕
           </button>
@@ -144,134 +171,155 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose }) => {
         {/* Body */}
         <form onSubmit={handleSave} style={{ padding: '24px 28px 28px' }}>
           <p style={{ margin: '0 0 20px', fontSize: 13, color: '#64748b', lineHeight: 1.5 }}>
-            Cập nhật thông tin cá nhân để hệ thống nhận diện bạn khi đặt lịch khám.
+            Cập nhật thông tin cá nhân và nghề nghiệp của bạn.
           </p>
 
-          {/* CCCD */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Số căn cước công dân <span style={{ color: '#ef4444' }}>*</span>
-            </label>
-            <input
-              type="text"
-              value={cccd}
-              onChange={e => setCccd(e.target.value)}
-              placeholder="012345678901"
-              maxLength={12}
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                padding: '11px 14px', borderRadius: 12,
-                border: '1.5px solid #e2e8f0', fontSize: 14,
-                outline: 'none', transition: 'border-color 0.2s',
-                background: '#f8fafc',
-              }}
-              onFocus={e => (e.currentTarget.style.borderColor = '#0093E9')}
-              onBlur={e => (e.currentTarget.style.borderColor = '#e2e8f0')}
-              required
-            />
-          </div>
+          <section>
+            <h4 style={{ fontSize: 12, color: '#0066CC', borderBottom: '1px solid #e2e8f0', paddingBottom: 6, marginBottom: 16 }}>THÔNG TIN CHUNG</h4>
 
-          {/* Email */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Email {gmailLocked && (
-                <span style={{ fontSize: 10, fontWeight: 600, marginLeft: 6, padding: '1px 8px', borderRadius: 999, background: '#fef3c7', color: '#92400e' }}>
-                  Đăng nhập bằng Google — không thể đổi
-                </span>
-              )}
-            </label>
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="example@email.com"
-              disabled={gmailLocked}
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                padding: '11px 14px', borderRadius: 12,
-                border: '1.5px solid #e2e8f0', fontSize: 14,
-                outline: 'none', transition: 'border-color 0.2s',
-                background: gmailLocked ? '#f1f5f9' : '#f8fafc',
-                color: gmailLocked ? '#94a3b8' : '#0f172a',
-                cursor: gmailLocked ? 'not-allowed' : 'text',
-              }}
-              onFocus={e => { if (!gmailLocked) e.currentTarget.style.borderColor = '#0093E9'; }}
-              onBlur={e => { if (!gmailLocked) e.currentTarget.style.borderColor = '#e2e8f0'; }}
-            />
-          </div>
+            {/* Full Name */}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Họ và tên</label>
+              <input
+                type="text"
+                value={profileForm.fullName || ''}
+                onChange={e => setProfileForm({ ...profileForm, fullName: e.target.value })}
+                style={inputStyle}
+                required
+              />
+            </div>
 
-          {/* Số điện thoại */}
-          <div style={{ marginBottom: 24 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>
-              Số điện thoại
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              placeholder="0901234567"
-              maxLength={11}
-              style={{
-                width: '100%', boxSizing: 'border-box',
-                padding: '11px 14px', borderRadius: 12,
-                border: '1.5px solid #e2e8f0', fontSize: 14,
-                outline: 'none', transition: 'border-color 0.2s',
-                background: '#f8fafc',
-              }}
-              onFocus={e => (e.currentTarget.style.borderColor = '#0093E9')}
-              onBlur={e => (e.currentTarget.style.borderColor = '#e2e8f0')}
-            />
-          </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              {/* CCCD */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>CCCD</label>
+                <input
+                  type="text"
+                  value={profileForm.identityNumber || ''}
+                  onChange={e => setProfileForm({ ...profileForm, identityNumber: e.target.value })}
+                  placeholder="12 số"
+                  maxLength={12}
+                  style={inputStyle}
+                />
+              </div>
+              {/* Phone */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Số điện thoại</label>
+                <input
+                  type="tel"
+                  value={profileForm.phoneNumber || ''}
+                  onChange={e => setProfileForm({ ...profileForm, phoneNumber: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+              {/* Gender */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Giới tính</label>
+                <select
+                  value={profileForm.gender || ''}
+                  onChange={e => setProfileForm({ ...profileForm, gender: e.target.value })}
+                  style={inputStyle}
+                >
+                  <option value="">Chọn...</option>
+                  <option value="MALE">Nam</option>
+                  <option value="FEMALE">Nữ</option>
+                  <option value="OTHER">Khác</option>
+                </select>
+              </div>
+              {/* DOB */}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Ngày sinh</label>
+                <input
+                  type="date"
+                  value={profileForm.dateOfBirth || ''}
+                  onChange={e => setProfileForm({ ...profileForm, dateOfBirth: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Địa chỉ</label>
+              <textarea
+                value={profileForm.address || ''}
+                onChange={e => setProfileForm({ ...profileForm, address: e.target.value })}
+                style={{ ...inputStyle, minHeight: 60, resize: 'vertical' }}
+              />
+            </div>
+          </section>
+
+          {isPatient && (
+            <section style={{ marginTop: 20 }}>
+              <h4 style={{ fontSize: 12, color: '#0066CC', borderBottom: '1px solid #e2e8f0', paddingBottom: 6, marginBottom: 16 }}>HỒ SƠ BỆNH NHÂN</h4>
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Số BHYT</label>
+                <input
+                  type="text"
+                  value={patientForm.insuranceNumber || ''}
+                  onChange={e => setPatientForm({ ...patientForm, insuranceNumber: e.target.value })}
+                  style={inputStyle}
+                  placeholder="DN401..."
+                />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Số điện thoại khẩn cấp</label>
+                <input
+                  type="tel"
+                  value={patientForm.emergencyContactPhone || ''}
+                  onChange={e => setPatientForm({ ...patientForm, emergencyContactPhone: e.target.value })}
+                  style={inputStyle}
+                />
+              </div>
+            </section>
+          )}
+
+          {isDoctor && (
+            <section style={{ marginTop: 20 }}>
+              <h4 style={{ fontSize: 12, color: '#0066CC', borderBottom: '1px solid #e2e8f0', paddingBottom: 6, marginBottom: 16 }}>THÔNG TIN BÁC SĨ</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Chuyên khoa</label>
+                  <input
+                    type="text"
+                    value={doctorForm.specialization || ''}
+                    onChange={e => setDoctorForm({ ...doctorForm, specialization: e.target.value })}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Số năm kinh nghiệm</label>
+                  <input
+                    type="number"
+                    value={doctorForm.experienceYear || ''}
+                    onChange={e => setDoctorForm({ ...doctorForm, experienceYear: parseInt(e.target.value) })}
+                    style={inputStyle}
+                  />
+                </div>
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', marginBottom: 6 }}>Tiểu sử / Bio</label>
+                <textarea
+                  value={doctorForm.bio || ''}
+                  onChange={e => setDoctorForm({ ...doctorForm, bio: e.target.value })}
+                  style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }}
+                />
+              </div>
+            </section>
+          )}
 
           {/* Error / Success */}
-          {error && (
-            <div style={{
-              marginBottom: 16, padding: '10px 14px', borderRadius: 10,
-              background: '#fef2f2', border: '1px solid #fecaca',
-              color: '#dc2626', fontSize: 13,
-            }}>
-              ⚠️ {error}
-            </div>
-          )}
-          {success && (
-            <div style={{
-              marginBottom: 16, padding: '10px 14px', borderRadius: 10,
-              background: '#f0fdf4', border: '1px solid #bbf7d0',
-              color: '#16a34a', fontSize: 13, fontWeight: 600,
-            }}>
-              ✅ Lưu thông tin thành công!
-            </div>
-          )}
+          {error && <div style={{ marginBottom: 16, color: '#dc2626', fontSize: 13 }}>⚠️ {error}</div>}
+          {success && <div style={{ marginBottom: 16, color: '#16a34a', fontSize: 13, fontWeight: 600 }}>✅ Đã cập nhật thành công!</div>}
 
           {/* Actions */}
           <div style={{ display: 'flex', gap: 10 }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                flex: 1, padding: '12px', borderRadius: 12,
-                border: '1.5px solid #e2e8f0', background: 'white',
-                fontWeight: 600, fontSize: 14, cursor: 'pointer',
-                color: '#64748b', transition: 'all 0.2s',
-              }}
-              onMouseEnter={e => (e.currentTarget.style.background = '#f8fafc')}
-              onMouseLeave={e => (e.currentTarget.style.background = 'white')}
-            >
-              Hủy
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                flex: 1, padding: '12px', borderRadius: 12,
-                border: 'none',
-                background: saving ? '#94a3b8' : 'linear-gradient(135deg, #0093E9, #0066CC)',
-                fontWeight: 700, fontSize: 14, cursor: saving ? 'not-allowed' : 'pointer',
-                color: 'white', transition: 'all 0.2s',
-                boxShadow: saving ? 'none' : '0 4px 12px rgba(0,147,233,0.3)',
-              }}
-            >
-              {saving ? '⏳ Đang lưu...' : '💾 Lưu thông tin'}
+            <button type="button" onClick={onClose} style={btnSecondaryStyle}>Hủy</button>
+            <button type="submit" disabled={saving} style={btnPrimaryStyle(saving)}>
+              {saving ? '⏳ Đang lưu...' : '💾 Lưu thay đổi'}
             </button>
           </div>
         </form>

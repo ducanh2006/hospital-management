@@ -26,12 +26,6 @@ public class AccountEntity {
     @Column(name = "email", length = 150)
     private String email;
 
-    @Column(name = "phone_number", length = 15)
-    private String phoneNumber;
-
-    @Column(name = "identity_number", length = 12, nullable = false, unique = true)
-    private String identityNumber;
-
     @Column(name = "role_id")
     private Integer roleId;
 }
