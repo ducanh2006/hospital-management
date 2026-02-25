@@ -23,7 +23,7 @@ public class ProfileService {
      */
     public Optional<ProfileEntity> findMyProfile(String sub) {
         return accountRepo.findByKeycloakUserId(sub)
-                .flatMap(acc -> profileRepo.findByAccountId(acc.getId()));
+                .flatMap(acc ->  profileRepo.findByAccountId(acc.getId()) );
     }
 
     /**

@@ -68,14 +68,16 @@ const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const promises: Promise<any>[] = [profileService.getMe()];
-        if (isPatient) promises.push(patientService.getMe());
-        if (isDoctor) promises.push(doctorService.getMe());
+        // Build promises and remember their positions so we can read results reliably
+        const promises: Promise<any>[] = [];
+        const profileIndex = promises.push(profileService.getMe()) - 1;
+        const patientIndex = isPatient ? promises.push(patientService.getMe()) - 1 : -1;
+        const doctorIndex = isDoctor ? promises.push(doctorService.getMe()) - 1 : -1;
 
         const results = await Promise.all(promises);
-        setProfileForm(results[0].data || {});
-        if (isPatient) setPatientForm(results[promises.indexOf(patientService.getMe())]?.data || {});
-        if (isDoctor) setDoctorForm(results[promises.indexOf(doctorService.getMe())]?.data || {});
+        setProfileForm(results[profileIndex]?.data || {});
+        if (patientIndex !== -1) setPatientForm(results[patientIndex]?.data || {});
+        if (doctorIndex !== -1) setDoctorForm(results[doctorIndex]?.data || {});
       } catch (err) {
         console.warn('Failed to fetch full profile data, using fallback defaults');
         setProfileForm({

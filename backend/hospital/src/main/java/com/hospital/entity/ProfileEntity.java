@@ -2,6 +2,9 @@ package com.hospital.entity;
 
 import java.time.LocalDate;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import com.hospital.dto.Gender;
 
 import jakarta.persistence.Column;
@@ -33,7 +36,8 @@ public class ProfileEntity {
     private String identityNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column
+    @Column(columnDefinition = "gender_enum")
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     private Gender gender;
 
     @Column(name = "date_of_birth")

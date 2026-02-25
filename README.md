@@ -77,7 +77,7 @@ Dự án **Hệ Thống Quản Lý Bệnh Viện** là một ứng dụng web fu
 
 Cấu trúc quan hệ giữa các bảng trong cơ sở dữ liệu được minh họa dưới đây:
 
-![Sơ đồ ERD của Bệnh viện](assets/erd-diagram.png)
+![Sơ đồ ERD của Bệnh viện](assets/erd-diagram-v2.png)
 
 ---
 
@@ -217,5 +217,45 @@ Sau khi backend đã chạy, bạn có thể truy cập vào giao diện Swagger
 ## 📧 Hỗ Trợ
 
 Nếu gặp bất kỳ vấn đề nào, vui lòng liên hệ hoặc mở một issue trên repository này.
+
+## Luồng hoạt động của dự án
+#### 2. Logic Luồng Đăng Nhập & Đồng Bộ Dữ Liệu (Critical)
+*   **Auth Provider:** Keycloak (OIDC). Frontend không lưu password, chỉ xử lý Token.
+*   **Header Behavior:**
+    *   *Chưa login:* Hiển thị nút "Login".
+    *   *Đã login:* Hiển thị `full_name` (ghép từ `first_name` + `last_name` trong Keycloak Token). Click vào hiển thị menu: "Edit Profile", "Logout".
+*   **Post-Login Flow (Backend Sync):**
+    1.  Frontend nhận Access Token từ Keycloak.
+    2.  Gọi ngay API: `POST /api/accounts/login` (Header: `Authorization: Bearer <token>`).
+    3.  **Backend Logic:**
+        *   Giải mã Token, trích xuất thông tin.
+        *   **Upsert `profile`:** Tạo mới hoặc cập nhật bảng `profile` liên kết với `account`.
+        *   **Sync Roles:** Kiểm tra claim `roles` trong Token:
+            *   Có `patient` -> Upsert bảng `patient` (điền null nếu thiếu dữ liệu).
+            *   Có `doctor` -> Upsert bảng `doctor` (điền null nếu thiếu dữ liệu).
+            *   Mục tiêu: Đảm bảo sự tồn tại của bản ghi nghiệp vụ tương ứng với role.
+*   **Logout Flow:** Xóa token local, gọi endpoint logout của Keycloak để invalidate session.
+
+#### 3. Logic Chỉnh Sửa Hồ Sơ (Edit Profile)
+*   **Access:** Mọi user đã đăng nhập đều sửa được phần `Profile` (thông tin chung).
+*   **Conditional Edit:**
+    *   Nếu có role `patient`: Cho phép sửa thêm trường thuộc bảng `patient`.
+    *   Nếu có role `doctor`: Cho phép sửa thêm trường thuộc bảng `doctor`.
+*   **Submission Strategy:**
+    *   Frontend gom tất cả thay đổi vào một action "Save".
+    *   Gửi đồng thời (parallel) 3 request bằng `Promise.all` tới:
+        1.  `PUT /api/profiles`
+        2.  `PUT /api/patients` (nếu có role)
+        3.  `PUT /api/doctors` (nếu có role)
+    *   Payload: Toàn bộ thông tin cập nhật trong Body + Token xác thực.
+
+#### 4. Phân Quyền Truy Cập Menu (Navigation)
+| Menu Item | Access Control | Ghi chú kỹ thuật |
+| :--- | :--- | :--- |
+| **Trang chủ, Giới thiệu, Cơ cấu tổ chức** | Public | Không cần Token. |
+| **Đội ngũ bác sĩ, Tin tức** | Public | Read-only data. |
+| **Đặt lịch khám** | Role: `PATIENT` | Input: `doctor_id`. Backend lấy `patient_id` từ Token. |
+| **Kết quả xét nghiệm** | Authenticated | Gọi `appointment-controller`, backend filter theo `patient_id` trong Token. |
+| **Quản lý hệ thống** | Role: `ADMIN`, `DOCTOR` | CRUD toàn quyền (Đơn giản hóa: Admin và Doctor có quyền như nhau). |
 
 

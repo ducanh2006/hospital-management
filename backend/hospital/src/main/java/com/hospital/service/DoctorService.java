@@ -41,12 +41,25 @@ public class DoctorService {
      * Bước 2: findDoctorsByIds() — lấy đầy đủ DoctorDTO chỉ trên IDs của trang.
      */
     public PageResponse<DoctorDTO> searchDoctors(DoctorSearchRequest req) {
+        // 1. Xử lý Gender (giữ nguyên code cũ của bạn)
         Gender gender = (req.getGender() != null && !req.getGender().isBlank())
                 ? Gender.valueOf(req.getGender().toUpperCase())
                 : null;
 
+        // 2. Xử lý Name: Thêm % vào đây để tránh lỗi SQL khi param là null
+        String searchName = null;
+        if (req.getName() != null && !req.getName().isBlank()) {
+            searchName = "%" + req.getName().toLowerCase() + "%";
+        }
+
+        // Log kiểm tra
+        // System.out.println(" gender = " + gender);
+        // System.out.println(" searchName = " + searchName); // In ra %name% hoặc null
+        // System.out.println(" departmentId = " + req.getDepartmentId());
+
+        // 3. Gọi Repo với biến searchName đã xử lý
         Page<Integer> idPage = repo.findDoctorIds(
-                req.getName(),
+                searchName, // Truyền biến mới này vào
                 gender,
                 req.getDepartmentId(),
                 PageRequest.of(req.getPage(), req.getSize()));

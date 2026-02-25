@@ -109,7 +109,7 @@ public class WebSecurityConfig {
 
                         // ── DOCTOR + ADMIN ────────────────────────────────────────────
                         // Bác sĩ xem danh sách bệnh nhân
-                        .requestMatchers(HttpMethod.GET, "/api/patients/**").hasAnyRole("doctor", "admin")
+                        .requestMatchers(HttpMethod.GET, "/api/patients/**").hasAnyRole("doctor", "admin","patient")
 
                         // Bác sĩ cập nhật lịch hẹn (confirm/complete/cancel)
                         .requestMatchers(HttpMethod.PUT, "/api/appointments/**").hasAnyRole("doctor", "admin")
