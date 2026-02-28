@@ -17,9 +17,8 @@ public class RoleEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
 
-    // Column trong DB mới là `role_name`, không phải `name`
     @Column(name = "role_name", length = 50, nullable = false, unique = true)
-    String name;
+    String roleName;
 
     @Column(name = "description", length = 255)
     String description;

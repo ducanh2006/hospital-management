@@ -143,7 +143,14 @@ class DoctorServiceTest {
     // -----------------------------
     @Test
     void deleteNonExistingShouldThrow() {
-        Integer nonExistId = 999_999;
-        assertThrows(EntityNotFoundException.class, () -> doctorService.deleteById(nonExistId));
+
+        Integer nonExistId = 999_999_999;
+
+        EntityNotFoundException ex = assertThrows(
+                EntityNotFoundException.class,
+                () -> doctorService.deleteById(nonExistId)
+        );
+
+        assertTrue(ex.getMessage().contains(String.valueOf(nonExistId)));
     }
 }
