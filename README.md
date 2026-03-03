@@ -118,8 +118,8 @@ Cách này giúp tự động khởi động PostgreSQL, Keycloak (cổng 8081),
 Clone dự án và chạy lệnh:
 
 ```bash
-git clone https://github.com/ducanh2006/AI-project-2025.1.git    
-cd AI-project-2025.1
+git clone https://github.com/ducanh2006/hospital-management
+cd hospital-management-main
 docker-compose up --build
 ```
 *Lưu ý: Nếu muốn chạy ngầm, thêm cờ `-d`: `docker-compose up -d`.*
